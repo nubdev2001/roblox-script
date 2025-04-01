@@ -18,6 +18,7 @@ local camera = workspace.CurrentCamera
 local viewport_size = camera.ViewportSize
 local mouse_location = user_input_service:GetMouseLocation()
 local current_target: BasePart
+local viewportOffset = gui_service:GetGuiInset() -- Offset from the top bar
 
 local raycast_params = RaycastParams.new()
 
@@ -37,6 +38,7 @@ bindable_event.Fire = function(_, ...)
 		func(...)
 	end
 end
+
 bindable_event.Event.Connect = function(_, callback)
 	table.insert(bindable_event.Functions, callback)
 end
@@ -50,28 +52,29 @@ local nebula = {
 local flags = {
     ["fov enable"] = false,
     ["fov size"] = 100,
-    ["snapline enable"] = true,
-    ["prediction dot enable"] = true,
+    ["snapline enable"] = false,
+    ["prediction dot enable"] = false,
     ["prediction dot size"] = 3,
-    
+    ["snaplines enable"] = false,
 
-    ["crosshair enable"] = true,
+    ["crosshair enable"] = false,
     ["crosshair size"] = 5,
     ["aimbot enable"] = false,
     ["aimbot smoothness"] = 0.8,
 	["target npcs"] = true,
+	["radar enable"] = true,
 
     ["esp enable"] = true,
     ["esp box"] = true,
-    ["box type"] = "full",
+    ["box type"] = "cornered",
     ["esp name"] = true,
     ["esp distance"] = true,
     ["esp skeleton"] = true,
     ["esp highlight"] = true,
     ["esp displayname"] = true,
-    ["esp visible"] = true,
+    ["esp visible"] = false,
     ["esp health bar"] = true,
-    ["esp health text"] = false,
+    ["esp health text"] = true,
 
 	["esp nodes"] = true,
 	["esp btr"] = true,
@@ -86,7 +89,7 @@ local flags = {
     
     ["health bar position"] = "left",
 
-    ["weapon esp"] = true,
+    ["weapon esp"] = false,
 
     ["esp name color"] = Color3.fromRGB(255, 255, 255),
     ["esp skeleton color"] = Color3.fromRGB(255, 255, 255),
@@ -98,6 +101,7 @@ local flags = {
     ["prediction dot color"] = Color3.fromRGB(255, 69, 69),
     ["fov color"] = Color3.fromRGB(255, 255, 255),
     ["crosshair color"] = Color3.fromRGB(2, 255, 15),
+	["snaplines color"] = Color3.fromRGB(255, 255, 255),
 
 	["esp nodes color"] = Color3.fromRGB(255, 253, 110),
 	["esp btr color"] = Color3.fromRGB(255, 70, 70),
@@ -113,10 +117,15 @@ local flags = {
     ["crosshair thickness"] = 2,
     ["health bar thickness"] = 2,
     ["esp skeleton thickness"] = 1,
+	["snaplines thickness"] = 1,
+
+	["radar size"] = 200,
+	["radar map scale"] = 100,
+	["radar position"] = "topright"
 	
 }
 
-local hash = http_service:GenerateGUID(true)
+local hash = http_service:GenerateGUID(true) -- sdfsdf-sdfsdf5-sdf6sd5f-s5df4s5d
 getgenv().hash = hash
 
 local vertices = {
@@ -276,11 +285,8 @@ local vector3_to_vector2 = function(vector)
 	return Vector2.new(vector.X, vector.Y)
 end
 
-local draw_line = function(frame, from, to)
-    pcall(function()
-		local thickness = flags["esp skeleton thickness"]
-
-		local netVector = to - from
+local draw_line = function(frame, from, to,thickness)
+    local netVector = to - from
 
 		local length = math.sqrt(netVector.X ^ 2 + netVector.Y ^ 2) + 1
 		local midpoint = Vector2.new((from.X + to.X) / 2, (from.Y + to.Y) / 2)
@@ -290,7 +296,6 @@ local draw_line = function(frame, from, to)
 		frame.Position = UDim2.fromOffset(midpoint.X, midpoint.Y)
 		frame.Rotation = theta
 		frame.Size = UDim2.new(0, length, 0, thickness)
-	end)
 end
 
 -- local insert_npc = function(tbl, npc)
@@ -786,6 +791,49 @@ dot.Color = flags["prediction dot color"]
 dot.Position = mouse_location
 dot.Radius = flags["prediction dot size"]
 
+-- local radar = nebula.functions:create("Frame",{
+-- 	Name = "radar",
+-- 	Size = UDim2.new(0, flags["radar size"], 0, flags["radar size"]),
+-- 	Position = flags["radar position"] == "topleft" and UDim2.new(0, 10, 0, 0) or UDim2.new(1, -flags["radar size"] - 10, 0, 0),
+-- 	BackgroundColor3 = Color3.new(0, 0, 0),
+-- 	BackgroundTransparency = 0.5,
+-- 	BorderSizePixel = 0,
+-- 	Parent = gui_holder
+-- })
+
+-- local RadarCircle = Instance.new("UICorner")
+-- RadarCircle.CornerRadius = UDim.new(1, 0)
+-- RadarCircle.Parent = radar
+
+-- local lineX = Instance.new("Frame")
+-- lineX.Name = "x"
+-- lineX.Size = UDim2.new(1, 0, 0, 1)
+-- lineX.Position = UDim2.new(0, 0, 0.5, 0)
+-- lineX.BackgroundColor3 = Color3.new(1, 1, 1)
+-- lineX.BorderSizePixel = 0
+-- lineX.Rotation = 0
+-- lineX.Parent = radar
+
+-- local lineY = Instance.new("Frame")
+-- lineY.Name = "y"
+-- lineY.Size = UDim2.new(0, 1, 1, 0)
+-- lineY.Position = UDim2.new(0.5, 0, 0, 0)
+-- lineY.BackgroundColor3 = Color3.new(1, 1, 1)
+-- lineY.BorderSizePixel = 0
+-- lineY.Rotation = 0
+-- lineY.Parent = radar
+
+-- local playerDot = Instance.new("Frame")
+-- playerDot.Size = UDim2.new(0, 8, 0, 8)
+-- playerDot.Position = UDim2.new(0.5, -4, 0.5, -4)
+-- playerDot.BackgroundColor3 = Color3.new(1, 1, 1)
+-- playerDot.BorderSizePixel = 0
+-- playerDot.Parent = radar
+
+-- local playerDotCircle = Instance.new("UICorner")
+-- playerDotCircle.CornerRadius = UDim.new(1, 0)
+-- playerDotCircle.Parent = playerDot
+
 local part_points = {
 	torso = { "UpperTorso", "LowerTorso" },
 	larm = { "LeftUpperArm", "LeftLowerArm", "LeftHand" },
@@ -887,21 +935,19 @@ local ESP = function(model)
 			}
 		),
         outline2 = nebula.functions:create("UIStroke", { Thickness = 1, Enabled = true, LineJoinMode = Enum.LineJoinMode.Miter }),
-        flag1 = nebula.functions:create(
-			"TextLabel",
-			{
-				Parent = esp_holder,
-				Text = "",
-				TextColor3 = Color3.new(0, 0.85, 0),
-				Font = flags["font face"],
-				TextSize = 9,
-				BackgroundTransparency = 1,
-				TextStrokeTransparency = 0,
-				ZIndex = 999,
-				TextStrokeColor3 = Color3.fromRGB(0, 0, 0),
-				TextXAlignment = Enum.TextXAlignment.Right,
-			}
-		),
+        flag1 = nebula.functions:create("TextLabel",{Parent = esp_holder,Text = "",TextColor3 = Color3.new(0, 0.85, 0),Font = flags["font face"],TextSize = 9,BackgroundTransparency = 1,TextStrokeTransparency = 0,ZIndex = 999,TextStrokeColor3 = Color3.fromRGB(0, 0, 0),TextXAlignment = Enum.TextXAlignment.Right,}),
+		left_top_fix = nebula.functions:create("Frame",{ Parent = esp_holder, Size = UDim2.new(0, 1, 0, 6), ZIndex = 999 }),
+		right_top_fix = nebula.functions:create("Frame",{ Parent = esp_holder, Size = UDim2.new(0, 1, 0, 6), ZIndex = 999 }),
+		bottom_side_fix = nebula.functions:create("Frame",{ Parent = esp_holder, Size = UDim2.new(0, 1, 0, 6), ZIndex = 999 }),
+		bottom_right_side_fix = nebula.functions:create("Frame",{ Parent = esp_holder, Size = UDim2.new(0, 1, 0, 6), ZIndex = 999 }),
+		left_top = nebula.functions:create("Frame", { Parent = esp_holder, ZIndex = 3 }),
+		left_side = nebula.functions:create("Frame", { Parent = esp_holder }),
+		right_top = nebula.functions:create("Frame", { Parent = esp_holder, ZIndex = 3 }),
+		right_side = nebula.functions:create("Frame", { Parent = esp_holder }),
+		bottom_side = nebula.functions:create("Frame", { Parent = esp_holder }),
+		bottom_down = nebula.functions:create("Frame", { Parent = esp_holder }),
+		bottom_right_side = nebula.functions:create("Frame", { Parent = esp_holder }),
+		bottom_right_down = nebula.functions:create("Frame", { Parent = esp_holder }),
         flag2 = nebula.functions:create(
 			"TextLabel",
 			{
@@ -922,6 +968,22 @@ local ESP = function(model)
 			Size = UDim2.new(1, 0, 1, 0),
 			BackgroundTransparency = 1,
 		}),
+
+		snapline = nebula.functions:create("Frame", {
+			Parent = esp_holder,
+			Name = "snapline",
+			BorderSizePixel = 0
+			-- BackgroundTransparency = 1,
+		}),
+
+		-- radar_player_dot = nebula.functions:create("Frame", {
+		-- 	Name = "radar_player_dot",
+		-- 	Parent = radar,
+		-- 	Size = UDim2.new(0, 8, 0, 8),
+		-- 	-- BackgroundTransparency = 1,
+		-- 	BackgroundColor3 = Color3.new(1, 0, 0),
+        --     BorderSizePixel = 0
+		-- }),
 		-- arrow = nebula.functions:create("ImageLabel", {
 		-- 	Parent = esp_holder,
 		-- 	Size = UDim2.new(0, 20, 0, 20),
@@ -931,125 +993,24 @@ local ESP = function(model)
 		-- }),
     }
 
-    -- drawings.arrow = Drawing.new("Triangle")
-    -- drawings.arrow.Color = Color3.fromRGB(0, 255, 0)
-    -- fovTriangle.Filled = true
-    -- fovTriangle.Transparency = 0.7
-    -- fovTriangle.Visible = true
+    -- local radar_player = Instance.new("UICorner")
+    -- radar_player.CornerRadius = UDim.new(1, 0)
+    -- radar_player.Parent = drawings.radar_player_dot
 
-
-    nebula.functions:create("Frame", {
-		Parent = drawings.skeleton,
-		Name = "head",
-		BorderSizePixel = 0,
-	})
-
-	nebula.functions:create("Frame", {
-		Parent = drawings.skeleton,
-		Name = "torso1",
-		BorderSizePixel = 0,
-	})
-
-	nebula.functions:create("Frame", {
-		Parent = drawings.skeleton,
-		Name = "torso2",
-		BorderSizePixel = 0,
-	})
-
-	nebula.functions:create("Frame", {
-		Parent = drawings.skeleton,
-		Name = "larm1",
-		BorderSizePixel = 0,
-	})
-
-	nebula.functions:create("Frame", {
-		Parent = drawings.skeleton,
-		Name = "larm2",
-		BorderSizePixel = 0,
-	})
-
-	nebula.functions:create("Frame", {
-		Parent = drawings.skeleton,
-		Name = "larm3",
-		BorderSizePixel = 0,
-	})
-
-	nebula.functions:create("Frame", {
-		Parent = drawings.skeleton,
-		Name = "rarm1",
-		BorderSizePixel = 0,
-	})
-
-	nebula.functions:create("Frame", {
-		Parent = drawings.skeleton,
-		Name = "rarm2",
-		BorderSizePixel = 0,
-	})
-
-	nebula.functions:create("Frame", {
-		Parent = drawings.skeleton,
-		Name = "rarm3",
-		BorderSizePixel = 0,
-	})
-
-	nebula.functions:create("Frame", {
-		Parent = drawings.skeleton,
-		Name = "lleg1",
-		BorderSizePixel = 0,
-	})
-
-	nebula.functions:create("Frame", {
-		Parent = drawings.skeleton,
-		Name = "lleg2",
-		BorderSizePixel = 0,
-	})
-
-	nebula.functions:create("Frame", {
-		Parent = drawings.skeleton,
-		Name = "lleg3",
-		BorderSizePixel = 0,
-	})
-
-	nebula.functions:create("Frame", {
-		Parent = drawings.skeleton,
-		Name = "rleg1",
-		BorderSizePixel = 0,
-	})
-
-	nebula.functions:create("Frame", {
-		Parent = drawings.skeleton,
-		Name = "rleg2",
-		BorderSizePixel = 0,
-	})
-
-	nebula.functions:create("Frame", {
-		Parent = drawings.skeleton,
-		Name = "rleg3",
-		BorderSizePixel = 0,
-	})
+	for _,bone in {"head","torso1","torso2","larm1","larm2","larm3","rarm1","rarm2","rarm3","lleg1","lleg2","lleg3","rleg1","rleg2","rleg3"} do
+		nebula.functions:create("Frame", {
+			Parent = drawings.skeleton,
+			Name = bone,
+			BorderSizePixel = 0,
+		})
+	end
 
     drawings.healthbar_gradient.Parent = drawings.healthbar
     drawings.outline.Parent = drawings.box
     drawings.outline2.Parent = drawings.box2
 
     local function hide_esp()
-        for _, name in
-            {
-                "name",
-                "distance",
-                "weapon",
-                "behind_healthbar",
-                "healthbar",
-                "health_text",
-                "box",
-                "box2",
-                "skeleton",
-                "flag1",
-                "flag2"
-                -- "arrow"
-            }
-        do
-            
+        for _, name in { "name", "distance", "weapon", "behind_healthbar", "healthbar", "health_text", "box", "box2", "skeleton", "flag1", "flag2", "left_top_fix", "right_top_fix", "bottom_side_fix", "bottom_right_side_fix", "left_top", "left_side", "right_top", "right_side", "bottom_side", "bottom_down", "bottom_right_side", "bottom_right_down","snapline" } do
             drawings[name].Visible = false
         end
     end
@@ -1094,6 +1055,15 @@ local ESP = function(model)
                     if not position then
                         return
                     end
+					
+					
+					-- if flags["radar enable"] then
+					-- 	local relativePos = (hrp.Position - camera.CFrame.Position) / flags["radar map scale"]
+					-- 	local x = math.clamp(0.5 + relativePos.X / flags["radar size"], 0, 1)
+					-- 	local y = math.clamp(0.5 - relativePos.Z / flags["radar size"], 0, 1)
+						
+					-- 	drawings.radar_player_dot.Position = UDim2.new(x, -3, y, -3)							
+					-- end
 
                     local max_distance = (camera.CFrame.Position - position).Magnitude / 3.5714285714
                     local esp_enable =  flags["esp enable"]
@@ -1144,13 +1114,13 @@ local ESP = function(model)
                             drawings.name.Text = char_model.Name
                         end
 
-                        if box_esp then
+
+                        if box_esp  and box_type == "full" then
                             drawings.box.Size = UDim2.new(0, scale.X - 1, 0, scale.Y - 1)
 							drawings.box2.Size = UDim2.new(0, scale.X + 1, 0, scale.Y + 1)
 
 							drawings.box.Position = UDim2.new(0, pos.X - (scale.X / 2), 0, pos.Y - (scale.Y / 2))
-							drawings.box2.Position =
-								UDim2.new(0, pos.X - (scale.X / 2) - 1, 0, pos.Y - (scale.Y / 2) - 1)
+							drawings.box2.Position = UDim2.new(0, pos.X - (scale.X / 2) - 1, 0, pos.Y - (scale.Y / 2) - 1)
 
 							drawings.box.Visible = true
 							drawings.box2.Visible = true
@@ -1161,6 +1131,7 @@ local ESP = function(model)
 									and current_target
 									and current_target:IsDescendantOf(char_model)
 									and highlight_esp_color
+									and flags["fov enable"]
 								)
 										and highlight_esp_color
 									or box_esp_color,
@@ -1171,6 +1142,56 @@ local ESP = function(model)
 							drawings.box2.Visible = false
                         end
 
+						if box_esp and box_type == "cornered" then
+							local positions = {
+								{ "left_top_fix", pos.X - scale.X / 2, pos.Y - scale.Y / 2, 1, 12 },
+								{ "right_top_fix", pos.X + scale.X / 2 - 1, pos.Y - scale.Y / 2, 1, 12 },
+								{ "bottom_side_fix", pos.X - scale.X / 2, pos.Y + scale.Y / 2 - 6 },
+								{ "bottom_right_side_fix", pos.X + scale.X / 2 - 1, pos.Y + scale.Y / 2 - 6 },
+								{ "left_top", pos.X - scale.X / 2, pos.Y - scale.Y / 2, scale.X / 3, 1, Vector2.new(0, 0), },
+								{ "left_side", pos.X - scale.X / 2, pos.Y - scale.Y / 2, 1, scale.Y / 4, Vector2.new(0, 0), },
+								{ "right_top", pos.X + scale.X / 2, pos.Y - scale.Y / 2, scale.X / 3, 1, Vector2.new(1, 0), },
+								{ "right_side", pos.X + scale.X / 2 - 1, pos.Y - scale.Y / 2, 1, scale.Y / 4, Vector2.new(0, 0), },
+								{ "bottom_side", pos.X - scale.X / 2, pos.Y + scale.Y / 2, 1, scale.Y / 4, Vector2.new(0, 3), },
+								{ "bottom_down", pos.X - scale.X / 2, pos.Y + scale.Y / 2, scale.X / 3, 1, Vector2.new(0, 1), },
+								{ "bottom_right_side", pos.X + scale.X / 2, pos.Y + scale.Y / 2, 1, scale.Y / 4, Vector2.new(1, 1), },
+								{ "bottom_right_down", pos.X + scale.X / 2, pos.Y + scale.Y / 2, scale.X / 3, 1, Vector2.new(1, 1), },
+							}
+
+							for _, v in positions do
+								local name, x_pos, y_pos, width, height, anchor = unpack(v)
+								local drawing = drawings[name]
+
+								drawing.Position = UDim2.new(0, x_pos, 0, y_pos)
+
+								if not name:find("fix") then
+									drawing.Size = UDim2.new(0, width, 0, height)
+									drawing.AnchorPoint = anchor
+									drawing.BorderSizePixel = 1
+								else
+									drawing.BorderSizePixel = 0
+								end
+
+								drawing.Visible = true
+								drawing.BackgroundColor3 = drawing.BackgroundColor3:Lerp(
+									(
+										highlight_esp
+										and current_target
+										and current_target:IsDescendantOf(char_model)
+										and highlight_esp_color
+										and flags["fov enable"]
+									)
+											and highlight_esp_color
+										or box_esp_color,
+									0.04
+								)
+							end
+						else
+							for _, name in { "left_top_fix", "right_top_fix", "bottom_side_fix", "bottom_right_side_fix", "left_top", "left_side", "right_top", "right_side", "bottom_down", "bottom_side", "bottom_right_side", "bottom_right_down", } do
+								drawings[name].Visible = false
+							end
+						end
+
                         if name_esp then
                             drawings.name.Visible = true
 							drawings.name.TextColor3 = drawings.name.TextColor3:Lerp(
@@ -1179,6 +1200,7 @@ local ESP = function(model)
 									and current_target
 									and current_target:IsDescendantOf(char_model)
 									and highlight_esp_color
+									and flags["fov enable"]
 								)
 										and highlight_esp_color
 									or name_esp_color,
@@ -1196,6 +1218,7 @@ local ESP = function(model)
 									and current_target
 									and current_target:IsDescendantOf(char_model)
 									and highlight_esp_color
+									and flags["fov enable"]
 								)
 										and highlight_esp_color
 									or distance_esp_color,
@@ -1216,6 +1239,7 @@ local ESP = function(model)
 									and current_target
 									and current_target:IsDescendantOf(char_model)
 									and highlight_esp_color
+									and flags["fov enable"]
 								)
 										and highlight_esp_color
 									or weapon_esp_color,
@@ -1228,7 +1252,7 @@ local ESP = function(model)
 
                         local bottom_offset = (health_bar_esp and health_bar_position == "bottom") and 7 or 0
                         
-                        if distance_esp and weapon_esp then
+						if distance_esp and weapon_esp then
 							drawings.distance.Position = UDim2.new(0, pos.X, 0, pos.Y + scale.Y / 2 + 17 + bottom_offset)
 							drawings.weapon.Position = UDim2.new(0, pos.X, 0, pos.Y + scale.Y / 2 + 6 + bottom_offset)
 						elseif distance_esp then
@@ -1236,6 +1260,7 @@ local ESP = function(model)
 						elseif weapon_esp then
 							drawings.weapon.Position = UDim2.new(0, pos.X, 0, pos.Y + scale.Y / 2 + 6 + bottom_offset)
 						end
+
 
                         if health_bar_esp then
 							local health, max_health = math.floor(humanoid.Health), humanoid.MaxHealth
@@ -1328,12 +1353,10 @@ local ESP = function(model)
 
 							if box_type == "cornered" then
 								drawings.flag1.Position = UDim2.new(0, box_side + 4, 0, box_top + 2)
-								drawings.flag2.Position =
-									UDim2.new(0, box_side + 4, 0, box_top + 2 + drawings.flag1.TextBounds.Y)
+								drawings.flag2.Position = UDim2.new(0, box_side + 4, 0, box_top + 2 + drawings.flag1.TextBounds.Y)
 							elseif box_type == "full" then
 								drawings.flag1.Position = UDim2.new(0, box_side + 4, 0, box_top)
-								drawings.flag2.Position =
-									UDim2.new(0, box_side + 4, 0, box_top + drawings.flag1.TextBounds.Y)
+								drawings.flag2.Position = UDim2.new(0, box_side + 4, 0, box_top + drawings.flag1.TextBounds.Y)
 							end
 
 							drawings.flag1.Position = drawings.flag1.Position
@@ -1343,6 +1366,17 @@ local ESP = function(model)
 						else
 							drawings.flag1.Visible = false
 							drawings.flag2.Visible = false
+						end
+
+						if flags["snaplines enable"] then
+							drawings.snapline.Visible = true
+							drawings.snapline.BackgroundColor3 = flags["snaplines color"]
+							draw_line(drawings.snapline,
+							Vector2.new(viewport_size.X / 2,-viewportOffset.Y + 5),
+							Vector2.new(pos.X,pos.Y),
+							flags["snaplines thickness"])
+						else
+							drawings.snapline.Visible = false
 						end
 
                         for _, body_part in part_points do
@@ -1399,27 +1433,27 @@ local ESP = function(model)
 								bone.BackgroundColor3 = skeleton_esp_color
 							end
 							
+							local thickness = flags["esp skeleton thickness"]
+							-- pcall(function()
+								draw_line(drawings.skeleton.head, points.head, points.torso[1],thickness)
+								draw_line(drawings.skeleton.torso1, points.torso[1], points.torso[2],thickness)
 
-							pcall(function()
-								draw_line(drawings.skeleton.head, points.head, points.torso[1])
-								draw_line(drawings.skeleton.torso1, points.torso[1], points.torso[2])
+								draw_line(drawings.skeleton.larm1, points.torso[1], points.larm[1],thickness)
+								draw_line(drawings.skeleton.larm2, points.larm[1], points.larm[2],thickness)
+								draw_line(drawings.skeleton.larm3, points.larm[2], points.larm[3],thickness)
 
-								draw_line(drawings.skeleton.larm1, points.torso[1], points.larm[1])
-								draw_line(drawings.skeleton.larm2, points.larm[1], points.larm[2])
-								draw_line(drawings.skeleton.larm3, points.larm[2], points.larm[3])
+								draw_line(drawings.skeleton.rarm1, points.torso[1], points.rarm[1],thickness)
+								draw_line(drawings.skeleton.rarm2, points.rarm[1], points.rarm[2],thickness)
+								draw_line(drawings.skeleton.rarm3, points.rarm[2], points.rarm[3],thickness)
 
-								draw_line(drawings.skeleton.rarm1, points.torso[1], points.rarm[1])
-								draw_line(drawings.skeleton.rarm2, points.rarm[1], points.rarm[2])
-								draw_line(drawings.skeleton.rarm3, points.rarm[2], points.rarm[3])
+								draw_line(drawings.skeleton.lleg1, points.torso[2], points.lleg[1],thickness)
+								draw_line(drawings.skeleton.lleg2, points.lleg[1], points.lleg[2],thickness)
+								draw_line(drawings.skeleton.lleg3, points.lleg[2], points.lleg[3],thickness)
 
-								draw_line(drawings.skeleton.lleg1, points.torso[2], points.lleg[1])
-								draw_line(drawings.skeleton.lleg2, points.lleg[1], points.lleg[2])
-								draw_line(drawings.skeleton.lleg3, points.lleg[2], points.lleg[3])
-
-								draw_line(drawings.skeleton.rleg1, points.torso[2], points.rleg[1])
-								draw_line(drawings.skeleton.rleg2, points.rleg[1], points.rleg[2])
-								draw_line(drawings.skeleton.rleg3, points.rleg[2], points.rleg[3])
-							end)
+								draw_line(drawings.skeleton.rleg1, points.torso[2], points.rleg[1],thickness)
+								draw_line(drawings.skeleton.rleg2, points.rleg[1], points.rleg[2],thickness)
+								draw_line(drawings.skeleton.rleg3, points.rleg[2], points.rleg[3],thickness)
+							-- end)
 						else
 							drawings.skeleton.Visible = false
 						end
@@ -1435,9 +1469,9 @@ local ESP = function(model)
         end)
     end
     
-    pcall(function()
+    -- pcall(function()
 		coroutine.wrap(update)()
-	end)
+	-- end)
 end
 
 local _run_service
@@ -1447,7 +1481,12 @@ _run_service = run_service.RenderStepped:Connect(function()
         pcall(function()
 			_run_service:Disconnect()
 
-			-- circle:Destroy()
+			circle:Destroy()
+			-- lineX:Destroy()
+			-- lineY:Destroy()
+			-- radar:Destroy()
+
+
 			gui_holder:Destroy()
 			snapline:Destroy()
 			crosshair_vertical:Destroy()
@@ -1495,7 +1534,6 @@ _run_service = run_service.RenderStepped:Connect(function()
 	
 			-- circle.Radius = fov_circle_size
 			-- circle.Color = flags["fov color"]
-			local viewportOffset = gui_service:GetGuiInset() -- Offset from the top bar
 	
 			circle.Size = UDim2.new(0, fov_circle_size * 2, 0, fov_circle_size * 2)
 			circle.Position  = UDim2.new(0, mouse_location.X - circle.Size.X.Offset / 2 - viewportOffset.X, 0, mouse_location.Y - circle.Size.Y.Offset / 2 - viewportOffset.Y)
