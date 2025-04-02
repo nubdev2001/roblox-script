@@ -27,8 +27,6 @@ raycast_params.FilterDescendantsInstances = { camera, local_player.Character }
 raycast_params.FilterType = Enum.RaycastFilterType.Exclude
 raycast_params.IgnoreWater = true
 
--- local military = workspace:FindFirstChild("Military")
-
 local bindable_event = {
 	Functions = {},
 	Event = {},
@@ -55,7 +53,7 @@ local flags = {
     ["snapline enable"] = false,
     ["prediction dot enable"] = false,
     ["prediction dot size"] = 3,
-    ["snaplines enable"] = false,
+    ["snaplines enable"] = true,
 
     ["crosshair enable"] = false,
     ["crosshair size"] = 5,
@@ -65,8 +63,9 @@ local flags = {
 	["radar enable"] = true,
 
     ["esp enable"] = true,
-    ["esp box"] = true,
-    ["box type"] = "cornered",
+    ["esp box"] = false,
+	["esp box 3d"] = true,
+    ["box type"] = "full",
     ["esp name"] = true,
     ["esp distance"] = true,
     ["esp skeleton"] = true,
@@ -88,6 +87,7 @@ local flags = {
     ["wall check"] = false,
     
     ["health bar position"] = "left",
+	["snaplines position"] = "top", --  center , top , mouse
 
     ["weapon esp"] = false,
 
@@ -102,6 +102,7 @@ local flags = {
     ["fov color"] = Color3.fromRGB(255, 255, 255),
     ["crosshair color"] = Color3.fromRGB(2, 255, 15),
 	["snaplines color"] = Color3.fromRGB(255, 255, 255),
+	["esp box 3d color"] = Color3.fromRGB(255, 255, 255),
 
 	["esp nodes color"] = Color3.fromRGB(255, 253, 110),
 	["esp btr color"] = Color3.fromRGB(255, 70, 70),
@@ -110,6 +111,7 @@ local flags = {
 
     ["snapline transparency"] = 0.8,
     ["fov transparency"] = 0.8,
+	["esp box 3d transparency"] = 0,
 
     ["body parts"] = "Head",
     ["fov thickness"] = 1,
@@ -118,6 +120,7 @@ local flags = {
     ["health bar thickness"] = 2,
     ["esp skeleton thickness"] = 1,
 	["snaplines thickness"] = 1,
+	["esp box 3d thickness"] = 1,
 
 	["radar size"] = 200,
 	["radar map scale"] = 100,
@@ -296,30 +299,13 @@ local draw_line = function(frame, from, to,thickness)
 		frame.Position = UDim2.fromOffset(midpoint.X, midpoint.Y)
 		frame.Rotation = theta
 		frame.Size = UDim2.new(0, length, 0, thickness)
+		-- frame.zIndex = -999
 end
-
--- local insert_npc = function(tbl, npc)
--- 	return table.insert(tbl, {
--- 		Character = npc,
--- 		Team = "NPC",
--- 		Neutral = false,
--- 	})
--- end
 
 local get_target = function(fov_size)
 	local closest, closest_distance, closest_screen_pos = nil, fov_size, nil
 
 	local silly = players:GetPlayers()
-
-	-- if flags["target npcs"] and military then
-	-- 	for _, folder in military:GetChildren() do
-	-- 		for _, model in folder:GetChildren() do
-	-- 			if model:IsA("Model") then
-	-- 				insert_npc(silly, model)
-	-- 			end
-	-- 		end
-	-- 	end
-	-- end
 
 	local body_parts = flags["body parts"]
 
@@ -537,7 +523,6 @@ local add_instance = function(object, data)
 
 	return draw
 end
-
 
 
 local function contains(list, value)
@@ -876,6 +861,7 @@ local ESP = function(model)
             TextColor3 = Color3.fromRGB(255, 255, 255),
 			Font = flags["font face"],
 			TextSize = 9,
+			ZIndex = 999,
 		}),
         weapon = nebula.functions:create("TextLabel",{
 			Parent = esp_holder,
@@ -911,7 +897,7 @@ local ESP = function(model)
 		),
         healthbar = nebula.functions:create("Frame",{
             Parent = esp_holder,
-            BackgroundColor3 = Color3.fromRGB(0, 255, 0),
+            BackgroundColor3 = Color3.fromRGB(255, 255, 255),
             BackgroundTransparency = 0,
             BorderSizePixel = 0,
         }),
@@ -976,6 +962,14 @@ local ESP = function(model)
 			-- BackgroundTransparency = 1,
 		}),
 
+		box_3d = nebula.functions:create("Frame", {
+			Parent = esp_holder,
+			Name = "box_3d",
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			Size = UDim2.new(1, 0, 1, 0)
+		}),
+
 		-- radar_player_dot = nebula.functions:create("Frame", {
 		-- 	Name = "radar_player_dot",
 		-- 	Parent = radar,
@@ -996,6 +990,7 @@ local ESP = function(model)
     -- local radar_player = Instance.new("UICorner")
     -- radar_player.CornerRadius = UDim.new(1, 0)
     -- radar_player.Parent = drawings.radar_player_dot
+	wait(1)
 
 	for _,bone in {"head","torso1","torso2","larm1","larm2","larm3","rarm1","rarm2","rarm3","lleg1","lleg2","lleg3","rleg1","rleg2","rleg3"} do
 		nebula.functions:create("Frame", {
@@ -1005,12 +1000,22 @@ local ESP = function(model)
 		})
 	end
 
+	for i = 1, 12 do
+		nebula.functions:create("Frame", {
+			Parent = drawings.box_3d,
+			Name = "line_" .. i,
+			BorderSizePixel = 0,
+			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+			Transparency = 0,
+		})
+	end
+
     drawings.healthbar_gradient.Parent = drawings.healthbar
     drawings.outline.Parent = drawings.box
     drawings.outline2.Parent = drawings.box2
 
     local function hide_esp()
-        for _, name in { "name", "distance", "weapon", "behind_healthbar", "healthbar", "health_text", "box", "box2", "skeleton", "flag1", "flag2", "left_top_fix", "right_top_fix", "bottom_side_fix", "bottom_right_side_fix", "left_top", "left_side", "right_top", "right_side", "bottom_side", "bottom_down", "bottom_right_side", "bottom_right_down","snapline" } do
+        for _, name in { "box_3d","name", "distance", "weapon", "behind_healthbar", "healthbar", "health_text", "box", "box2", "skeleton", "flag1", "flag2", "left_top_fix", "right_top_fix", "bottom_side_fix", "bottom_right_side_fix", "left_top", "left_side", "right_top", "right_side", "bottom_side", "bottom_down", "bottom_right_side", "bottom_right_down","snapline" } do
             drawings[name].Visible = false
         end
     end
@@ -1025,9 +1030,9 @@ local ESP = function(model)
         end
 
         esp_holder:Destroy()
+		-- print("esp ",model.Name," is being destroyed")
     end
 
-    model.Destroying:Connect(clear_esp)
     
 
     local update = function()
@@ -1036,10 +1041,22 @@ local ESP = function(model)
 		local health_transition_old = 0
 		local current_health = 0
 
+		model.Destroying:Connect(function()
+			
+		end)
+
         esp_connection = run_service.RenderStepped:Connect(function(deltaTime)
             if getgenv().hash ~= hash then
                 clear_esp()
             end
+
+			local success = pcall(function()
+				players:GetUserIdFromNameAsync(model.Name)
+			end)
+
+			if not success then
+				clear_esp()
+			end
 
             local char_model = model and model.Character
             if char_model then
@@ -1048,7 +1065,7 @@ local ESP = function(model)
 
                 if humanoid.Health > 0 and hrp then 
                     local _, size, position = nebula.functions:custom_bounds(char_model)
-                    -- local position = hrp.Position
+                    local position = hrp.Position
 
                     local size = Vector2.new(4, 6)
 
@@ -1086,6 +1103,10 @@ local ESP = function(model)
                         
                         local box_esp = flags["esp box"]
                         local name_esp = flags["esp name"]
+						local box_3d_esp = flags["esp box 3d"]
+						local box_3d_esp_color = flags["esp box 3d color"]
+						local box_3d_esp_thickness = flags["esp box 3d thickness"]
+						local box_3d_esp_transparency = flags["esp box 3d transparency"]
 
                         local distance_esp = flags["esp distance"]
                         local health_bar_position = flags["health bar position"]
@@ -1115,6 +1136,7 @@ local ESP = function(model)
                         end
 
 
+			
                         if box_esp  and box_type == "full" then
                             drawings.box.Size = UDim2.new(0, scale.X - 1, 0, scale.Y - 1)
 							drawings.box2.Size = UDim2.new(0, scale.X + 1, 0, scale.Y + 1)
@@ -1371,13 +1393,83 @@ local ESP = function(model)
 						if flags["snaplines enable"] then
 							drawings.snapline.Visible = true
 							drawings.snapline.BackgroundColor3 = flags["snaplines color"]
+							local position = Vector2.new(viewport_size.X / 2,-viewportOffset.Y + 5)
+
+							if flags["snaplines position"] == "top" then
+								position = Vector2.new(viewport_size.X / 2,-viewportOffset.Y + 5)
+							end
+
+							if flags["snaplines position"] == "center" then
+								position = Vector2.new(viewport_size.X / 2,(viewport_size.Y / 2) - viewportOffset.Y)
+							end
+
+							if flags["snaplines position"] == "mouse" then
+								position = Vector2.new(mouse_location.X, mouse_location.Y - viewportOffset.Y)
+							end
+
+							local boxTopCenter = Vector2.new(pos.X, pos.Y - scale.Y / 2)
+
 							draw_line(drawings.snapline,
-							Vector2.new(viewport_size.X / 2,-viewportOffset.Y + 5),
-							Vector2.new(pos.X,pos.Y),
+							position,
+							boxTopCenter,
 							flags["snaplines thickness"])
 						else
 							drawings.snapline.Visible = false
 						end
+
+						if box_3d_esp then
+							local _size = Vector3.new(size.X / 2, size.Y / 2, size.X / 2)
+
+							local points = {}
+							local corners = {
+								Vector3.new(-_size.X, -_size.Y, -_size.Z),
+								Vector3.new(_size.X, -_size.Y, -_size.Z),
+								Vector3.new(_size.X, _size.Y, -_size.Z),
+								Vector3.new(-_size.X, _size.Y, -_size.Z),
+								Vector3.new(-_size.X, -_size.Y, _size.Z),
+								Vector3.new(_size.X, -_size.Y, _size.Z),
+								Vector3.new(_size.X, _size.Y, _size.Z),
+								Vector3.new(-_size.X, _size.Y, _size.Z)
+							}
+							
+							-- Transform each corner to world space then to screen space
+							for i, corner in ipairs(corners) do
+								local worldPoint = hrp.CFrame:PointToWorldSpace(corner)
+								local screenPoint = camera:WorldToScreenPoint(worldPoint)
+								points[i] = vector3_to_vector2(screenPoint)
+							end
+
+							local edges = {
+								{1, 2}, {2, 3}, {3, 4}, {4, 1}, -- Bottom face
+								{5, 6}, {6, 7}, {7, 8}, {8, 5}, -- Top face
+								{1, 5}, {2, 6}, {3, 7}, {4, 8}  -- Connecting edges
+							}
+							
+							-- Make sure the box container is visible
+							drawings.box_3d.Visible = true
+							
+							-- Get existing line frames
+							local lineFrames = drawings.box_3d:GetChildren()
+
+							for _,line in pairs(lineFrames) do
+								line.BackgroundTransparency = box_3d_esp_transparency
+								line.BackgroundColor3 = box_3d_esp_color
+
+							end
+							
+							-- Draw each edge
+							for i, edge in ipairs(edges) do
+
+								
+								local line = lineFrames[i]
+								draw_line(line, points[edge[1]], points[edge[2]], box_3d_esp_thickness)
+							end
+						else
+							drawings.box_3d.Visible = false
+						end
+						
+
+						--------------------
 
                         for _, body_part in part_points do
 							if type(body_part) == "table" then
@@ -1573,6 +1665,10 @@ end)
 
 do
     for _,player in pairs(players:GetPlayers()) do
+		if getgenv().hash ~= hash then
+			return
+		end
+
 		if player ~= local_player then
             pcall(function()
 				coroutine.wrap(ESP)(player)
@@ -1581,6 +1677,10 @@ do
 	end
     
     players.PlayerAdded:Connect(function(player)
+		if getgenv().hash ~= hash then
+			return
+		end
+
         task.delay(1, function()	
             pcall(function()
 				coroutine.wrap(ESP)(player)
