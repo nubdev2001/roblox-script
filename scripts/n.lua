@@ -53,7 +53,7 @@ local flags = {
     ["snapline enable"] = false,
     ["prediction dot enable"] = false,
     ["prediction dot size"] = 3,
-    ["snaplines enable"] = true,
+    ["snaplines enable"] = false,
 
     ["crosshair enable"] = false,
     ["crosshair size"] = 5,
@@ -63,9 +63,9 @@ local flags = {
 	["radar enable"] = true,
 
     ["esp enable"] = true,
-    ["esp box"] = false,
-	["esp box 3d"] = true,
-    ["box type"] = "full",
+    ["esp box"] = true,
+	["esp box 3d"] = false,
+    ["box type"] = "cornered",
     ["esp name"] = true,
     ["esp distance"] = true,
     ["esp skeleton"] = true,
@@ -990,7 +990,7 @@ local ESP = function(model)
     -- local radar_player = Instance.new("UICorner")
     -- radar_player.CornerRadius = UDim.new(1, 0)
     -- radar_player.Parent = drawings.radar_player_dot
-	wait(1)
+	-- wait(1)
 
 	for _,bone in {"head","torso1","torso2","larm1","larm2","larm3","rarm1","rarm2","rarm3","lleg1","lleg2","lleg3","rleg1","rleg2","rleg3"} do
 		nebula.functions:create("Frame", {
@@ -1309,11 +1309,12 @@ local ESP = function(model)
 							end
 
 							do
-								if health_text_esp and health < max_health then
-									drawings.health_text.Text, drawings.health_text.Visible = tostring(math.floor(current_health)), true
-								else
-									drawings.health_text.Visible = false
-								end
+								drawings.health_text.Text, drawings.health_text.Visible = tostring(math.floor(current_health)), true
+								-- if health_text_esp and health < max_health then
+								-- 	drawings.health_text.Text, drawings.health_text.Visible = tostring(math.floor(current_health)), true
+								-- else
+								-- 	drawings.health_text.Visible = false
+								-- end
 								drawings.health_text.TextColor3 = health_color
 							end
 
