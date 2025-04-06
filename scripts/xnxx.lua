@@ -1,22 +1,19 @@
 
-local Bracket = loadstring(game:HttpGet("https://4b60-2405-9800-b961-2fd1-70ff-74e0-1305-e025.ngrok-free.app/ui.lua"))()
+local Bracket = loadstring(game:HttpGet("http://localhost:8080/scripts/ui.lua"))()
 
 Bracket:Notification({Title = "Text",Description = "Text",Duration = 10}) -- Duration can be nil for "x" to pop up
 Bracket:Notification2({Title = "Text",Duration = 10})
 
 -- see source code for more hidden things i forgot to add in this example
-local Window = Bracket:Window({Name = "Fallen Survival",Enabled = true,Color = Color3.new(1,0.5,0.25),Size = UDim2.new(0,496,0,496),Position = UDim2.new(0.5,-248,0.5,-248)}) do
+local Window = Bracket:Window({Name = "Nebula",Enabled = true,Color = Color3.new(1,0.5,0.25),Size = UDim2.new(0,496,0,496),Position = UDim2.new(0.5,-248,0.5,-248)}) do
 
     local Watermark = Window:Watermark({
-        Title = "Bracket V3.2 | Example",
+        Title = "Nebula V1.0",
         Flag = "UI/Watermark/Position",
         Enabled = true,
     })
 
     local Tab = Window:Tab({Name = "Aimbot"}) do
-        --Side might be "Left", "Right" or nil for auto side choose
-        --Tab:AddConfigSection("FolderName","Side")
-        --Tab.Name = "Name"
 
 		local Section = Tab:Section({Name = "Aimbot",Side = "Left"}) do
 
@@ -46,6 +43,44 @@ local Window = Bracket:Window({Name = "Fallen Survival",Enabled = true,Color = C
 					Value = true
 				},
 			}})
+
+			local Section = Tab:Section({Name = "FOV",Side = "Right"}) do
+				-- Section:Divider({Text = "Aimbit",Side = "Left"})
+	
+				Section:Toggle({Name = "Enable",Flag = "fov enable",Side = "Left",Value = false})
+				:Colorpicker({Flag = "fov color",Side = "Left",Value = {0,0,1,0,false} })
+	
+				Section:Slider({Name = "Size",Flag = "fov size",Side = "Left",Min = 10,Max = 300,Value = 100,Precise = 1,Unit = ""})
+				Section:Slider({Name = "Thickness",Flag = "fov thickness",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 1,Unit = ""})
+
+			end
+
+			local Section = Tab:Section({Name = "Prediction dot",Side = "Right"}) do
+				Section:Toggle({Name = "Enable",Flag = "prediction dot enable",Side = "Left",Value = false})
+				:Colorpicker({Flag = "prediction dot color",Side = "Left",Value = {0,0,1,0,false} })
+	
+				Section:Slider({Name = "size",Flag = "prediction dot size",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 1,Unit = ""})
+			end
+
+			local Section = Tab:Section({Name = "Snapline",Side = "Right"}) do
+				Section:Toggle({Name = "Enable",Flag = "snapline enable",Side = "Left",Value = false})
+				:Colorpicker({Flag = "snapline enable color",Side = "Left",Value = {0,0,1,0,false} })
+
+				Section:Slider({Name = "thickness",Flag = "snapline thickness",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 1,Unit = ""})
+			end
+	
+	
+			
+
+							-- Crosshair
+			local Section = Tab:Section({Name = "Crosshair",Side = "Right"}) do
+				Section:Toggle({Name = "Enable",Flag = "crosshair enable",Side = "Left",Value = false})
+				:Colorpicker({Flag = "crosshair color",Side = "Left",Value = {0,0,1,0,false} })
+					
+				Section:Slider({Name = "size",Flag = "crosshair size",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 1,Unit = ""})
+				Section:Slider({Name = "thickness",Flag = "crosshair thickness",Side = "Left",Min = 1,Max = 10,Value = 5,Precise = 1,Unit = ""})
+					
+			end
 		end
 
     end
@@ -74,13 +109,22 @@ local Window = Bracket:Window({Name = "Fallen Survival",Enabled = true,Color = C
 
 			Section:Toggle({Name = "Skeleton",Flag = "esp skeleton",Side = "Left",Value = false})
 			:Colorpicker({Flag = "esp skeleton color",Side = "Left",Value = {0,0,1,0,false} })
-			Section:Slider({Name = "thickness",Flag = "esp skeleton thickness",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 1,Unit = ""})
 
+			Section:Toggle({Name = "Highlight",Flag = "esp highlight",Side = "Left",Value = false})
+			:Colorpicker({Flag = "esp highlight color",Side = "Left",Value = {0,0,1,0,false} })
+			
 
 			Section:Toggle({Name = "HealthBar",Flag = "esp health bar",Side = "Left",Value = false})
-			Section:Slider({Name = "thickness",Flag = "health bar thickness",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 1,Unit = ""})
 
-			Section:Dropdown({Name = "Position",Flag = "health bar position",Side = "Left",List = {
+			
+
+			-- :Colorpicker({Flag = "health bar",Side = "Left",Value = {0,0,1,0,false} })
+		end
+
+		local esp_options = VisualTab:Section({Name = "ESP Options",Side = "Right"}) do
+			esp_options:Slider({Name = "HealthBar thickness",Flag = "health bar thickness",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 1,Unit = ""})
+			esp_options:Slider({Name = "Skeleton thickness",Flag = "esp skeleton thickness",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 1,Unit = ""})
+			esp_options:Dropdown({Name = "HealthBar Position",Flag = "health bar position",Side = "Left",List = {
 				{
 					Name = "Bottom",
 					Mode = "Button", 
@@ -92,9 +136,8 @@ local Window = Bracket:Window({Name = "Fallen Survival",Enabled = true,Color = C
 					Value = true
 				},
 			}})
-
-			-- :Colorpicker({Flag = "health bar",Side = "Left",Value = {0,0,1,0,false} })
 		end
+		
 
 		local Section = VisualTab:Section({Name = "Custom",Side = "Left"}) do
 			Section:Dropdown({Name = "Font",Flag = "font face",Side = "Left",List = {
@@ -107,40 +150,7 @@ local Window = Bracket:Window({Name = "Fallen Survival",Enabled = true,Color = C
 		end
 
 
-		local Section = VisualTab:Section({Name = "FOV",Side = "Right"}) do
-			-- Section:Divider({Text = "Aimbit",Side = "Left"})
-
-			Section:Toggle({Name = "Enable",Flag = "fov enable",Side = "Left",Value = false})
-			:Colorpicker({Flag = "fov color",Side = "Left",Value = {0,0,1,0,false} })
-
-			Section:Slider({Name = "Size",Flag = "fov size",Side = "Left",Min = 10,Max = 300,Value = 100,Precise = 1,Unit = ""})
-			Section:Slider({Name = "Thickness",Flag = "fov thickness",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 1,Unit = ""})
-
-			Section:Divider({Text = "crosshair",Side = "Right"})
-
-			Section:Toggle({Name = "Enable",Flag = "enable",Side = "Left",Value = false})
-			:Colorpicker({Flag = "crosshair color",Side = "Left",Value = {0,0,1,0,false} })
-
-			Section:Slider({Name = "size",Flag = "crosshair size",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 1,Unit = ""})
-			Section:Slider({Name = "thickness",Flag = "crosshair thickness",Side = "Left",Min = 1,Max = 10,Value = 5,Precise = 1,Unit = ""})
-
-			Section:Divider({Text = "Prediction dot",Side = "Right"})
-
-
-			Section:Toggle({Name = "Enable",Flag = "prediction dot enable",Side = "Left",Value = false})
-			:Colorpicker({Flag = "prediction dot color",Side = "Left",Value = {0,0,1,0,false} })
-
-			Section:Slider({Name = "size",Flag = "prediction dot size",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 1,Unit = ""})
-
-			Section:Divider({Text = "Snapline",Side = "Right"})
-
-
-			Section:Toggle({Name = "Enable",Flag = "snapline enable",Side = "Left",Value = false})
-			:Colorpicker({Flag = "snapline enable color",Side = "Left",Value = {0,0,1,0,false} })
-
-			Section:Slider({Name = "thickness",Flag = "snapline thickness",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 1,Unit = ""})
-
-		end
+		
 
 					
 	end
@@ -215,6 +225,3 @@ end
 Window:SetValue("Background/Offset",74)
 Window:AutoLoadConfig("Bracket_Example")
 Window:SetValue("UI/Enabled",Window.Flags["UI/OOL"])
-
-
-print(Window.Flags[""])

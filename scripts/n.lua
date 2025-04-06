@@ -41,92 +41,366 @@ bindable_event.Event.Connect = function(_, callback)
 	table.insert(bindable_event.Functions, callback)
 end
 
+
 local nebula = {
     ui = nil,
     Settings = {},
     functions = {},
 }
 
-local flags = {
-    ["fov enable"] = false,
-    ["fov size"] = 100,
-    ["snapline enable"] = false,
-    ["prediction dot enable"] = false,
-    ["prediction dot size"] = 3,
-    ["snaplines enable"] = false,
+nebula.ui = loadstring(game:HttpGet("http://localhost:8080/scripts/ui.lua"))()
 
-    ["crosshair enable"] = false,
-    ["crosshair size"] = 5,
-    ["aimbot enable"] = false,
-    ["aimbot smoothness"] = 0.8,
-	["target npcs"] = true,
-	["radar enable"] = true,
+nebula.ui:Notification({Title = "Text",Description = "Text",Duration = 10}) -- Duration can be nil for "x" to pop up
+nebula.ui:Notification2({Title = "Text",Duration = 10})
 
-    ["esp enable"] = true,
-    ["esp box"] = true,
-	["esp box 3d"] = false,
-    ["box type"] = "cornered",
-    ["esp name"] = true,
-    ["esp distance"] = true,
-    ["esp skeleton"] = true,
-    ["esp highlight"] = true,
-    ["esp displayname"] = true,
-    ["esp visible"] = false,
-    ["esp health bar"] = true,
-    ["esp health text"] = true,
+-- see source code for more hidden things i forgot to add in this example
+local Window = nebula.ui:Window({Name = "Nebula",Enabled = true,Color = Color3.new(1,0.5,0.25),Size = UDim2.new(0,496,0,496),Position = UDim2.new(0.5,-248,0.5,-248)}) do
 
-	["esp nodes"] = true,
-	["esp btr"] = true,
+    local Watermark = Window:Watermark({
+        Title = "Nebula V1.0",
+        Flag = "UI/Watermark/Position",
+        Enabled = true,
+    })
+
+    local Tab = Window:Tab({Name = "Aimbot"}) do
+
+		local Section = Tab:Section({Name = "Aimbot",Side = "Left"}) do
+
+			Section:Toggle({Name = "Enable",Flag = "aimbot enable",Side = "Left",Value = false})
+			-- Section:Toggle({Name = "Visibility Check",Flag = "visibility check",Side = "Left",Value = false})
+
+			Section:Slider({Name = "Smoothness",Flag = "aimbot smoothness",Side = "Left",Min = 0,Max = 1,Value = 0.5,Precise = 1})
+			Section:Dropdown({Name = "Aim Part",Flag = "body parts",Side = "Left",List = {
+				{
+					Name = "Head",
+					Mode = "Button", -- Button or Toggle
+					Value = false,
+				},
+				{
+					Name = "UpperTorso",
+					Mode = "Button",
+					Value = true
+				},
+				{
+					Name = "random",
+					Mode = "Button",
+					Value = true
+				},
+				{
+					Name = "closest",
+					Mode = "Button",
+					Value = true
+				},
+			}})
+
+			local Section = Tab:Section({Name = "FOV",Side = "Right"}) do
+				-- Section:Divider({Text = "Aimbit",Side = "Left"})
 	
-	["esp nodes keybind"] = Enum.KeyCode.V,
-    
-    ["team check"] = false,
-    ["dead check"] = true,
-    ["down check"] = true,
-    ["font face"] = "FredokaOne",
-    ["wall check"] = false,
-    
-    ["health bar position"] = "left",
-	["snaplines position"] = "top", --  center , top , mouse
-
-    ["weapon esp"] = false,
-
-    ["esp name color"] = Color3.fromRGB(255, 255, 255),
-    ["esp skeleton color"] = Color3.fromRGB(255, 255, 255),
-    ["esp highligh color"] = Color3.fromRGB(233, 144, 255),
-    ["esp distance color"] = Color3.fromRGB(0, 247, 255),
-    ["esp weapon color"] = Color3.fromRGB(255, 255, 255),
-    ["esp box color"] = Color3.fromRGB(255, 255, 255),
-    ["snapline color"] = Color3.fromRGB(255, 255, 255),
-    ["prediction dot color"] = Color3.fromRGB(255, 69, 69),
-    ["fov color"] = Color3.fromRGB(255, 255, 255),
-    ["crosshair color"] = Color3.fromRGB(2, 255, 15),
-	["snaplines color"] = Color3.fromRGB(255, 255, 255),
-	["esp box 3d color"] = Color3.fromRGB(255, 255, 255),
-
-	["esp nodes color"] = Color3.fromRGB(255, 253, 110),
-	["esp btr color"] = Color3.fromRGB(255, 70, 70),
-
-	["esp nodes list"] = {"Stone","Metal","Phosphate","Part"}, -- Stone, Metal, Phosphate
-
-    ["snapline transparency"] = 0.8,
-    ["fov transparency"] = 0.8,
-	["esp box 3d transparency"] = 0,
-
-    ["body parts"] = "Head",
-    ["fov thickness"] = 1,
-    ["snapline thickness"] = 1,
-    ["crosshair thickness"] = 2,
-    ["health bar thickness"] = 2,
-    ["esp skeleton thickness"] = 1,
-	["snaplines thickness"] = 1,
-	["esp box 3d thickness"] = 1,
-
-	["radar size"] = 200,
-	["radar map scale"] = 100,
-	["radar position"] = "topright"
+				Section:Toggle({Name = "Enable",Flag = "fov enable",Side = "Left",Value = false})
+				:Colorpicker({Flag = "fov color",Side = "Left",Value = {0,0,1,0,false} })
 	
-}
+				Section:Slider({Name = "Size",Flag = "fov size",Side = "Left",Min = 10,Max = 300,Value = 100,Precise = 1,Unit = ""})
+				Section:Slider({Name = "Thickness",Flag = "fov thickness",Side = "Left",Min = 0,Max = 10,Value = 1,Precise = 1,Unit = ""})
+				Section:Slider({Name = "Transparency",Flag = "fov transparency",Side = "Left",Min = 0,Max = 1,Value = 0,Precise = 1,Unit = ""})
+
+
+				
+			end
+
+			local Section = Tab:Section({Name = "Prediction dot",Side = "Right"}) do
+				Section:Toggle({Name = "Enable",Flag = "prediction dot enable",Side = "Left",Value = false})
+				:Colorpicker({Flag = "prediction dot color",Side = "Left",Value = {0,1,1,0,false} })
+	
+				Section:Slider({Name = "size",Flag = "prediction dot size",Side = "Left",Min = 1,Max = 10,Value = 3,Precise = 1,Unit = ""})
+				Section:Slider({Name = "Transparency",Flag = "prediction dot transparency",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 1,Unit = ""})
+			end
+
+			local Section = Tab:Section({Name = "Snapline",Side = "Right"}) do
+				Section:Toggle({Name = "Enable",Flag = "snapline enable",Side = "Left",Value = false})
+				:Colorpicker({Flag = "snapline color",Side = "Left",Value = {0,0,1,0,false} })
+
+
+				Section:Slider({Name = "Transparency",Flag = "snapline transparency",Side = "Left",Min = 0,Max = 1,Value = 0.5,Precise = 1,Unit = ""})
+				
+				Section:Slider({Name = "Thickness",Flag = "snapline thickness",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 1,Unit = ""})
+			end
+	
+	
+			
+
+							-- Crosshair
+			local Section = Tab:Section({Name = "Crosshair",Side = "Right"}) do
+				Section:Toggle({Name = "Enable",Flag = "crosshair enable",Side = "Left",Value = false})
+				:Colorpicker({Flag = "crosshair color",Side = "Left",Value = {0,0,1,0,false} })
+					
+				Section:Slider({Name = "size",Flag = "crosshair size",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 1,Unit = ""})
+				Section:Slider({Name = "thickness",Flag = "crosshair thickness",Side = "Left",Min = 1,Max = 10,Value = 5,Precise = 1,Unit = ""})
+					
+			end
+		end
+
+    end
+
+	local VisualTab = Window:Tab({Name = "Visual"}) do
+        --Side might be "Left", "Right" or nil for auto side choose
+        --Tab:AddConfigSection("FolderName","Side")
+        --Tab.Name = "Name"
+
+		local Section = VisualTab:Section({Name = "ESP",Side = "Left"}) do
+			-- Section:Divider({Text = "Aimbit",Side = "Left"})
+
+			Section:Toggle({Name = "Enable",Flag = "esp enable",Side = "Left",Value = false})
+
+			Section:Toggle({Name = "Box",Flag = "esp box",Side = "Left",Value = false})
+			:Colorpicker({Flag = "esp box color",Side = "Left",Value = {0,0,1,0,false} })
+
+			Section:Toggle({Name = "Name",Flag = "esp name",Side = "Left",Value = false})
+			:Colorpicker({Flag = "esp name color",Side = "Left",Value = {0,0,1,0,false} })
+
+			Section:Toggle({Name = "Distance",Flag = "esp distance",Side = "Left",Value = false})
+			:Colorpicker({Flag = "esp distance color",Side = "Left",Value = {0,0,1,0,false} })
+
+			Section:Toggle({Name = "Weapon",Flag = "esp weapon",Side = "Left",Value = false})
+			:Colorpicker({Flag = "esp weapon color",Side = "Left",Value = {0,0,1,0,false} })
+
+			Section:Toggle({Name = "Skeleton",Flag = "esp skeleton",Side = "Left",Value = false})
+			:Colorpicker({Flag = "esp skeleton color",Side = "Left",Value = {0,0,1,0,false} })
+
+			Section:Toggle({Name = "Highlight",Flag = "esp highlight",Side = "Left",Value = false})
+			:Colorpicker({Flag = "esp highlight color",Side = "Left",Value = {0,1,1,0,false} })
+
+			Section:Toggle({Name = "Visible",Flag = "esp visible",Side = "Left",Value = false})
+			
+			
+
+			Section:Toggle({Name = "Health Bar",Flag = "esp health bar",Side = "Left",Value = false})
+			Section:Toggle({Name = "Health Text",Flag = "esp health text",Side = "Left",Value = false})
+
+			
+
+			
+
+			-- :Colorpicker({Flag = "health bar",Side = "Left",Value = {0,0,1,0,false} })
+		end
+
+		local esp_options = VisualTab:Section({Name = "ESP Options",Side = "Right"}) do
+			esp_options:Slider({Name = "HealthBar thickness",Flag = "health bar thickness",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 1,Unit = ""})
+			esp_options:Slider({Name = "Skeleton thickness",Flag = "esp skeleton thickness",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 1,Unit = ""})
+			esp_options:Dropdown({Name = "HealthBar Position",Flag = "health bar position",Side = "Left",List = {
+				{
+					Name = "bottom",
+					Mode = "Button", 
+					Value = false,
+				},
+				{
+					Name = "left",
+					Mode = "Button",
+					Value = true
+				},
+			}})
+			esp_options:Dropdown({Name = "Box Type",Flag = "box type",Side = "Right",List = {
+				{
+					Name = "full",
+					Mode = "Button", 
+					Value = false,
+				},
+				{
+					Name = "cornered",
+					Mode = "Button",
+					Value = true
+				},
+			}})
+
+			
+		end
+
+		local esp_check = VisualTab:Section({Name = "ESP Checker",Side = "Right"}) do
+			esp_check:Toggle({Name = "Team Check",Flag = "team check",Side = "Left",Value = false})
+			esp_check:Toggle({Name = "Dead Check",Flag = "dead check",Side = "Left",Value = false})
+		end
+		
+
+		local Section = VisualTab:Section({Name = "Custom",Side = "Left"}) do
+			Section:Dropdown({Name = "Font Face",Flag = "font face",Side = "Left",List = {
+				{
+					Name = "FredokaOne",
+					mode = "Button", -- Button or Toggle
+					Value = true
+				},
+				{
+					Name = "SciFi",
+					mode = "Button", -- Button or Toggle
+					Value = false
+				},
+				{
+					Name = "GrenzeGotisch",
+					mode = "Button", -- Button or Toggle
+					Value = false
+				},
+			}})
+			Section:Slider({Name = "Font Size",Flag = "font size",Side = "Left",Min = 8,Max = 20,Value = 8,Precise = 1,Unit = ""})
+
+		end
+
+
+		
+
+					
+	end
+	
+    local OptionsTab = Window:Tab({Name = "Options"}) do
+        local MenuSection = OptionsTab:Section({Name = "Menu",Side = "Left"}) do
+            local UIToggle = MenuSection:Toggle({Name = "UI Enabled",Flag = "UI/Enabled",IgnoreFlag = true,
+            Value = Window.Enabled,Callback = function(Bool) Window.Enabled = Bool end})
+            UIToggle:Keybind({Value = "RightShift",Flag = "UI/Keybind",DoNotClear = true})
+            UIToggle:Colorpicker({Flag = "UI/Color",Value = {1,0.25,1,0,true},
+            Callback = function(HSVAR,Color) Window.Color = Color end})
+
+            MenuSection:Toggle({Name = "Open On Load",Flag = "UI/OOL",Value = true})
+            MenuSection:Toggle({Name = "Blur Gameplay",Flag = "UI/Blur",Value = false,
+            Callback = function(Bool) Window.Blur = Bool end})
+
+            MenuSection:Toggle({Name = "Watermark",Flag = "UI/Watermark/Enabled",Value = true,
+            Callback = function(Bool) Window.Watermark.Enabled = Bool end}):Keybind({Flag = "UI/Watermark/Keybind"})
+        end
+
+        OptionsTab:AddConfigSection("Bracket_Example","Left")
+
+        local BackgroundSection = OptionsTab:Section({Name = "Background",Side = "Right"}) do
+            BackgroundSection:Colorpicker({Name = "Color",Flag = "Background/Color",Value = {1,1,0,0,false},
+            Callback = function(HSVAR,Color) Window.Background.ImageColor3 = Color Window.Background.ImageTransparency = HSVAR[4] end})
+            BackgroundSection:Textbox({HideName = true,Flag = "Background/CustomImage",Placeholder = "rbxassetid://ImageId",
+            Callback = function(String,EnterPressed) if EnterPressed then Window.Background.Image = String end end})
+            BackgroundSection:Dropdown({HideName = true,Flag = "Background/Image",List = {
+                {Name = "Legacy",Mode = "Button",Callback = function()
+                    Window.Background.Image = "rbxassetid://2151741365"
+                    Window.Flags["Background/CustomImage"] = ""
+                end},
+                {Name = "Hearts",Mode = "Button",Callback = function()
+                    Window.Background.Image = "rbxassetid://6073763717"
+                    Window.Flags["Background/CustomImage"] = ""
+                end},
+                {Name = "Abstract",Mode = "Button",Callback = function()
+                    Window.Background.Image = "rbxassetid://6073743871"
+                    Window.Flags["Background/CustomImage"] = ""
+                end},
+                {Name = "Hexagon",Mode = "Button",Callback = function()
+                    Window.Background.Image = "rbxassetid://6073628839"
+                    Window.Flags["Background/CustomImage"] = ""
+                end},
+                {Name = "Circles",Mode = "Button",Callback = function()
+                    Window.Background.Image = "rbxassetid://6071579801"
+                    Window.Flags["Background/CustomImage"] = ""
+                end},
+                {Name = "Lace With Flowers",Mode = "Button",Callback = function()
+                    Window.Background.Image = "rbxassetid://6071575925"
+                    Window.Flags["Background/CustomImage"] = ""
+                end},
+                {Name = "Floral",Mode = "Button",Callback = function()
+                    Window.Background.Image = "rbxassetid://5553946656"
+                    Window.Flags["Background/CustomImage"] = ""
+                end,Value = true},
+                {Name = "Halloween",Mode = "Button",Callback = function()
+                    Window.Background.Image = "rbxassetid://11113209821"
+                    Window.Flags["Background/CustomImage"] = ""
+                end},
+                {Name = "Christmas",Mode = "Button",Callback = function()
+                    Window.Background.Image = "rbxassetid://11711560928"
+                    Window.Flags["Background/CustomImage"] = ""
+                end}
+            }})
+            BackgroundSection:Slider({Name = "Tile Offset",Flag = "Background/Offset",Wide = true,Min = 74,Max = 296,Value = 74,
+            Callback = function(Number) Window.Background.TileSize = UDim2.fromOffset(Number,Number) end})
+        end
+    end
+end
+
+Window:SetValue("Background/Offset",74)
+Window:AutoLoadConfig("Bracket_Example")
+Window:SetValue("UI/Enabled",Window.Flags["UI/OOL"])
+
+local flags = Window.Flags
+
+-- local flags = {
+--     ["fov enable"] = false,
+--     ["fov size"] = 100,
+--     ["snapline enable"] = false,
+--     ["prediction dot enable"] = false,
+--     ["prediction dot size"] = 3,
+--     ["snaplines enable"] = false,
+
+--     ["crosshair enable"] = false,
+--     ["crosshair size"] = 5,
+--     ["aimbot enable"] = false,
+--     ["aimbot smoothness"] = 0.8,
+-- 	["target npcs"] = true,
+-- 	["radar enable"] = true,
+
+--     ["esp enable"] = true,
+--     ["esp box"] = true,
+-- 	["esp box 3d"] = false,
+--     ["box type"] = "cornered",
+--     ["esp name"] = true,
+--     ["esp distance"] = true,
+--     ["esp skeleton"] = true,
+--     ["esp highlight"] = true,
+--     ["esp displayname"] = true,
+--     ["esp visible"] = false,
+--     ["esp health bar"] = true,
+--     ["esp health text"] = true,
+
+-- 	["esp nodes"] = true,
+-- 	["esp btr"] = true,
+	
+-- 	["esp nodes keybind"] = Enum.KeyCode.V,
+    
+--     ["team check"] = false,
+--     ["dead check"] = true,
+--     ["down check"] = true,
+--     ["font face"] = "FredokaOne",
+--     ["wall check"] = false,
+    
+--     ["health bar position"] = "left",
+-- 	["snaplines position"] = "top", --  center , top , mouse
+
+--     ["weapon esp"] = false,
+
+--     ["esp name color"] = Color3.fromRGB(255, 255, 255),
+--     ["esp skeleton color"] = Color3.fromRGB(255, 255, 255),
+--     ["esp highligh color"] = Color3.fromRGB(233, 144, 255),
+--     ["esp distance color"] = Color3.fromRGB(0, 247, 255),
+--     ["esp weapon color"] = Color3.fromRGB(255, 255, 255),
+--     ["esp box color"] = Color3.fromRGB(255, 255, 255),
+--     ["snapline color"] = Color3.fromRGB(255, 255, 255),
+--     ["prediction dot color"] = Color3.fromRGB(255, 69, 69),
+--     ["fov color"] = Color3.fromRGB(255, 255, 255),
+--     ["crosshair color"] = Color3.fromRGB(2, 255, 15),
+-- 	["snaplines color"] = Color3.fromRGB(255, 255, 255),
+-- 	["esp box 3d color"] = Color3.fromRGB(255, 255, 255),
+
+-- 	["esp nodes color"] = Color3.fromRGB(255, 253, 110),
+-- 	["esp btr color"] = Color3.fromRGB(255, 70, 70),
+
+-- 	["esp nodes list"] = {"Stone","Metal","Phosphate","Part"}, -- Stone, Metal, Phosphate
+
+--     ["snapline transparency"] = 0.8,
+--     ["fov transparency"] = 0.8,
+-- 	["esp box 3d transparency"] = 0,
+
+--     ["body parts"] = "Head",
+--     ["fov thickness"] = 1,
+--     ["snapline thickness"] = 1,
+--     ["crosshair thickness"] = 2,
+--     ["health bar thickness"] = 2,
+--     ["esp skeleton thickness"] = 1,
+-- 	["snaplines thickness"] = 1,
+-- 	["esp box 3d thickness"] = 1,
+
+-- 	["radar size"] = 200,
+-- 	["radar map scale"] = 100,
+-- 	["radar position"] = "topright"
+	
+-- }
 
 local hash = http_service:GenerateGUID(true) -- sdfsdf-sdfsdf5-sdf6sd5f-s5df4s5d
 getgenv().hash = hash
@@ -302,12 +576,25 @@ local draw_line = function(frame, from, to,thickness)
 		-- frame.zIndex = -999
 end
 
+function dump(o)
+	if type(o) == 'table' then
+	   local s = '{ '
+	   for k,v in pairs(o) do
+		  if type(k) ~= 'number' then k = '"'..k..'"' end
+		  s = s .. '['..k..'] = ' .. dump(v) .. ','
+	   end
+	   return s .. '} '
+	else
+	   return tostring(o)
+	end
+ end
+
 local get_target = function(fov_size)
 	local closest, closest_distance, closest_screen_pos = nil, fov_size, nil
 
 	local silly = players:GetPlayers()
 
-	local body_parts = flags["body parts"]
+	local body_parts = flags["body parts"][1]
 
 	if body_parts == "random" then
 		local hawked_tuah = { "Head", "UpperTorso" }
@@ -330,11 +617,6 @@ local get_target = function(fov_size)
 		if flags["team check"] and is_team(player) then
 			continue
 		end
-
-		if flags["down check"] and is_down(humanoid) then
-			continue
-		end
-
 		if flags["dead check"] and is_dead(humanoid) then
 			continue
 		end
@@ -717,6 +999,11 @@ local handle_flag = function(value, esp_type)
 	end
 end
 
+function table_to_color(Table)
+	if type(Table) ~= "table" then return Table end
+		return Color3.fromHSV(Table[1], Table[2], Table[3])
+end
+
 local update_flag = function()
 
 	for _, type_name in types do
@@ -747,24 +1034,25 @@ local uiCorner = Instance.new("UICorner")
 uiCorner.CornerRadius = UDim.new(1, 0)
 uiCorner.Parent = circle
 
+
 -- Create UIStroke for border
 local uiStroke = Instance.new("UIStroke")
 uiStroke.Thickness = 2
-uiStroke.Color = flags["fov color"]
+uiStroke.Color = table_to_color(flags["fov color"]) 
 uiStroke.Parent = circle
 
-local gradient = Instance.new("UIGradient")
-gradient.Parent = circle
-gradient.Rotation = 45  -- You can set any rotation for the gradient
-gradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 240, 109)),  -- Start color (red)
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(245, 161, 234))   -- End color (blue)
-})
-gradient.Parent = uiStroke
+-- local gradient = Instance.new("UIGradient")
+-- gradient.Parent = circle
+-- gradient.Rotation = 45  -- You can set any rotation for the gradient
+-- gradient.Color = ColorSequence.new({
+--     ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 240, 109)),  -- Start color (red)
+--     ColorSequenceKeypoint.new(1, Color3.fromRGB(245, 161, 234))   -- End color (blue)
+-- })
+-- gradient.Parent = uiStroke
 
 local snapline = Drawing.new("Line")
 snapline.Thickness = flags["snapline thickness"]
-snapline.Color = flags["snapline color"]
+snapline.Color = table_to_color(flags["snapline color"]) 
 snapline.Visible = flags["snapline enable"]
 snapline.From = mouse_location
 snapline.Transparency = flags["snapline transparency"]
@@ -772,52 +1060,9 @@ snapline.Transparency = flags["snapline transparency"]
 local dot = Drawing.new("Circle")
 dot.Visible = flags["prediction dot enable"]
 dot.Filled = true
-dot.Color = flags["prediction dot color"]
+dot.Color = table_to_color(flags["prediction dot color"]) 
 dot.Position = mouse_location
 dot.Radius = flags["prediction dot size"]
-
--- local radar = nebula.functions:create("Frame",{
--- 	Name = "radar",
--- 	Size = UDim2.new(0, flags["radar size"], 0, flags["radar size"]),
--- 	Position = flags["radar position"] == "topleft" and UDim2.new(0, 10, 0, 0) or UDim2.new(1, -flags["radar size"] - 10, 0, 0),
--- 	BackgroundColor3 = Color3.new(0, 0, 0),
--- 	BackgroundTransparency = 0.5,
--- 	BorderSizePixel = 0,
--- 	Parent = gui_holder
--- })
-
--- local RadarCircle = Instance.new("UICorner")
--- RadarCircle.CornerRadius = UDim.new(1, 0)
--- RadarCircle.Parent = radar
-
--- local lineX = Instance.new("Frame")
--- lineX.Name = "x"
--- lineX.Size = UDim2.new(1, 0, 0, 1)
--- lineX.Position = UDim2.new(0, 0, 0.5, 0)
--- lineX.BackgroundColor3 = Color3.new(1, 1, 1)
--- lineX.BorderSizePixel = 0
--- lineX.Rotation = 0
--- lineX.Parent = radar
-
--- local lineY = Instance.new("Frame")
--- lineY.Name = "y"
--- lineY.Size = UDim2.new(0, 1, 1, 0)
--- lineY.Position = UDim2.new(0.5, 0, 0, 0)
--- lineY.BackgroundColor3 = Color3.new(1, 1, 1)
--- lineY.BorderSizePixel = 0
--- lineY.Rotation = 0
--- lineY.Parent = radar
-
--- local playerDot = Instance.new("Frame")
--- playerDot.Size = UDim2.new(0, 8, 0, 8)
--- playerDot.Position = UDim2.new(0.5, -4, 0.5, -4)
--- playerDot.BackgroundColor3 = Color3.new(1, 1, 1)
--- playerDot.BorderSizePixel = 0
--- playerDot.Parent = radar
-
--- local playerDotCircle = Instance.new("UICorner")
--- playerDotCircle.CornerRadius = UDim.new(1, 0)
--- playerDotCircle.Parent = playerDot
 
 local part_points = {
 	torso = { "UpperTorso", "LowerTorso" },
@@ -830,17 +1075,20 @@ local part_points = {
 
 local crosshair_vertical = Drawing.new("Line")
 crosshair_vertical.Thickness = flags["crosshair thickness"]
-crosshair_vertical.Color = flags["crosshair color"]
+crosshair_vertical.Color = table_to_color(flags["crosshair color"])
 crosshair_vertical.Visible = flags["crosshair enable"]
 
 local crosshair_horizontal = Drawing.new("Line")
 crosshair_horizontal.Thickness = flags["crosshair thickness"]
-crosshair_horizontal.Color = flags["crosshair color"]
+crosshair_horizontal.Color = table_to_color(flags["crosshair color"])
 crosshair_horizontal.Visible = flags["crosshair enable"]
 
 local ESP = function(model)
     local esp_holder = nebula.functions:create("ScreenGui", { Parent = gethui(), Name = "esp_holder" })
     local esp_connection
+
+	local font = flags["font face"][1]
+
 
     local drawings = {
         name = nebula.functions:create("TextLabel",{
@@ -849,7 +1097,7 @@ local ESP = function(model)
 			TextStrokeTransparency = 0,
 			TextStrokeColor3 = Color3.fromRGB(1, 1, 1),
             TextColor3 = Color3.fromRGB(255, 255, 255),
-			Font = flags["font face"],
+			Font = font,
 			TextSize = 9,
 			Text = model.DisplayName or model.Name,
 		}),
@@ -859,7 +1107,7 @@ local ESP = function(model)
 			TextStrokeTransparency = 0,
 			TextStrokeColor3 = Color3.fromRGB(1, 1, 1),
             TextColor3 = Color3.fromRGB(255, 255, 255),
-			Font = flags["font face"],
+			Font = font,
 			TextSize = 9,
 			ZIndex = 999,
 		}),
@@ -869,7 +1117,7 @@ local ESP = function(model)
 			TextStrokeTransparency = 0,
 			TextStrokeColor3 = Color3.fromRGB(1, 1, 1),
             TextColor3 = Color3.fromRGB(255, 255, 255),
-			Font = flags["font face"],
+			Font = font,
 			TextSize = 9,
 		}),
         health_text = nebula.functions:create(
@@ -877,7 +1125,7 @@ local ESP = function(model)
 			{
 				Parent = esp_holder,
 				TextXAlignment = Enum.TextXAlignment.Center,
-				Font = flags["font face"],
+				Font = font,
 				TextSize = 9,
 				BackgroundTransparency = 1,
 				TextStrokeTransparency = 0,
@@ -921,7 +1169,7 @@ local ESP = function(model)
 			}
 		),
         outline2 = nebula.functions:create("UIStroke", { Thickness = 1, Enabled = true, LineJoinMode = Enum.LineJoinMode.Miter }),
-        flag1 = nebula.functions:create("TextLabel",{Parent = esp_holder,Text = "",TextColor3 = Color3.new(0, 0.85, 0),Font = flags["font face"],TextSize = 9,BackgroundTransparency = 1,TextStrokeTransparency = 0,ZIndex = 999,TextStrokeColor3 = Color3.fromRGB(0, 0, 0),TextXAlignment = Enum.TextXAlignment.Right,}),
+        flag1 = nebula.functions:create("TextLabel",{Parent = esp_holder,Text = "",TextColor3 = Color3.new(0, 0.85, 0),Font = font,TextSize = 9,BackgroundTransparency = 1,TextStrokeTransparency = 0,ZIndex = 999,TextStrokeColor3 = Color3.fromRGB(0, 0, 0),TextXAlignment = Enum.TextXAlignment.Right,}),
 		left_top_fix = nebula.functions:create("Frame",{ Parent = esp_holder, Size = UDim2.new(0, 1, 0, 6), ZIndex = 999 }),
 		right_top_fix = nebula.functions:create("Frame",{ Parent = esp_holder, Size = UDim2.new(0, 1, 0, 6), ZIndex = 999 }),
 		bottom_side_fix = nebula.functions:create("Frame",{ Parent = esp_holder, Size = UDim2.new(0, 1, 0, 6), ZIndex = 999 }),
@@ -939,7 +1187,7 @@ local ESP = function(model)
 			{
 				Parent = esp_holder,
 				Text = "",
-				Font = flags["font face"],
+				Font = font,
 				TextSize = 9,
 				BackgroundTransparency = 1,
 				TextStrokeTransparency = 0,
@@ -1084,11 +1332,17 @@ local ESP = function(model)
 
                     local max_distance = (camera.CFrame.Position - position).Magnitude / 3.5714285714
                     local esp_enable =  flags["esp enable"]
+					-- print(esp_enable)
 
                     if max_distance and char_model and humanoid and hrp and esp_enable then
                         local team_check = flags["team check"]
+						local dead_check = flags["dead check"]
 
                         if team_check and is_team(model) then
+							return hide_esp()
+						end
+
+						if dead_check and is_dead(humanoid) then
 							return hide_esp()
 						end
 
@@ -1104,13 +1358,14 @@ local ESP = function(model)
                         local box_esp = flags["esp box"]
                         local name_esp = flags["esp name"]
 						local box_3d_esp = flags["esp box 3d"]
-						local box_3d_esp_color = flags["esp box 3d color"]
+						
 						local box_3d_esp_thickness = flags["esp box 3d thickness"]
 						local box_3d_esp_transparency = flags["esp box 3d transparency"]
 
                         local distance_esp = flags["esp distance"]
-                        local health_bar_position = flags["health bar position"]
+                        local health_bar_position = flags["health bar position"][1]
                         local health_bar_esp = flags["esp health bar"]
+
 
                         local weapon_esp = flags["weapon esp"]
                         local health_text_esp = flags["esp health text"]
@@ -1118,14 +1373,15 @@ local ESP = function(model)
                         local highlight_esp = flags["esp highlight"]
                         local displayname_esp = flags["esp displayname"]
                         local visible_flag_esp = flags["esp visible"]
-                        local box_type = flags["box type"]
+                        local box_type = flags["box type"][1]
 
-                        local name_esp_color = flags["esp name color"]
-                        local highlight_esp_color = flags["esp highligh color"]
-                        local skeleton_esp_color = flags["esp skeleton color"]
-                        local distance_esp_color = flags["esp distance color"]
-                        local weapon_esp_color = flags["esp weapon color"]
-                        local box_esp_color = flags["esp box color"]
+                        local name_esp_color = table_to_color(flags["esp name color"])
+                        local highlight_esp_color = table_to_color(flags["esp highlight color"])
+                        local skeleton_esp_color = table_to_color(flags["esp skeleton color"])
+                        local distance_esp_color = table_to_color(flags["esp distance color"])
+                        local weapon_esp_color = table_to_color(flags["esp weapon color"])
+                        local box_esp_color = table_to_color(flags["esp box color"])
+						local box_3d_esp_color = table_to_color(flags["esp box 3d color"])
 
                         local health_bar_thickness = flags["health bar thickness"]
 
@@ -1136,6 +1392,10 @@ local ESP = function(model)
                         end
 
 
+						for _, name in { "name", "distance", "weapon", "health_text", "flag1", "flag2", } do
+							drawings[name].Font = flags["font face"][1]
+							drawings[name].TextSize = flags["font size"]
+						end
 			
                         if box_esp  and box_type == "full" then
                             drawings.box.Size = UDim2.new(0, scale.X - 1, 0, scale.Y - 1)
@@ -1310,11 +1570,11 @@ local ESP = function(model)
 
 							do
 								drawings.health_text.Text, drawings.health_text.Visible = tostring(math.floor(current_health)), true
-								-- if health_text_esp and health < max_health then
-								-- 	drawings.health_text.Text, drawings.health_text.Visible = tostring(math.floor(current_health)), true
-								-- else
-								-- 	drawings.health_text.Visible = false
-								-- end
+								if health_text_esp then
+									drawings.health_text.Text, drawings.health_text.Visible = tostring(math.floor(current_health)), true
+								else
+									drawings.health_text.Visible = false
+								end
 								drawings.health_text.TextColor3 = health_color
 							end
 
@@ -1575,10 +1835,6 @@ _run_service = run_service.RenderStepped:Connect(function()
 			_run_service:Disconnect()
 
 			circle:Destroy()
-			-- lineX:Destroy()
-			-- lineY:Destroy()
-			-- radar:Destroy()
-
 
 			gui_holder:Destroy()
 			snapline:Destroy()
@@ -1599,20 +1855,23 @@ _run_service = run_service.RenderStepped:Connect(function()
     end
     
 
-    pcall(function()
+    -- pcall(function()
 		local head_vec;
 
 		do
 			local fov_circle_size = flags["fov size"]
+
+			-- print(fov_circle_size)
 	
 			local head, pos = get_target(fov_circle_size)
 			current_target = head
 	
 			if pos then
 				head_vec = Vector2.new(pos.X, pos.Y)
-	
+
 				dot.Visible = flags["prediction dot enable"]
 				snapline.Visible = flags["snapline enable"]
+
 				snapline.From = mouse_location
 				snapline.To = head_vec
 				dot.Position = head_vec
@@ -1621,18 +1880,28 @@ _run_service = run_service.RenderStepped:Connect(function()
 				snapline.Visible = false
 			end
 	
-			snapline.Color = flags["snapline color"]
-	
-			dot.Color = flags["prediction dot color"]
+			snapline.Color = table_to_color(flags["snapline color"])
+			snapline.Transparency = flags["snapline transparency"]
+			snapline.Thickness = flags["snapline thickness"]
+
+			
+			dot.Color = table_to_color(flags["prediction dot color"])
+			dot.FillTransparency = flags["prediction dot transparency"]
+			dot.Radius = flags["prediction dot size"]
+
 	
 			-- circle.Radius = fov_circle_size
 			-- circle.Color = flags["fov color"]
 	
 			circle.Size = UDim2.new(0, fov_circle_size * 2, 0, fov_circle_size * 2)
 			circle.Position  = UDim2.new(0, mouse_location.X - circle.Size.X.Offset / 2 - viewportOffset.X, 0, mouse_location.Y - circle.Size.Y.Offset / 2 - viewportOffset.Y)
-			circle.BackgroundTransparency = flags["fov transparency"]
-			circle.UIStroke.Color = flags["fov color"]
+			circle.BackgroundTransparency = 1
+
+			circle.UIStroke.Transparency = flags["fov transparency"]
+			circle.UIStroke.Color = table_to_color(flags["fov color"])
 			circle.Visible = flags["fov enable"]
+
+			circle.UIStroke.Thickness = flags["fov thickness"]
 	
 	
 			local center = Vector2.new(mouse_location.X, mouse_location.Y)
@@ -1641,10 +1910,13 @@ _run_service = run_service.RenderStepped:Connect(function()
 			crosshair_horizontal.From = Vector2.new(center.X - flags["crosshair size"], center.Y)
 			crosshair_horizontal.To = Vector2.new(center.X + flags["crosshair size"], center.Y)
 		end
+
 		
-		if flags["wall check"] and nebula.functions:is_visible(current_target) then
-			return
-		end
+		-- if flags["visibility check"] and current_target then
+		-- 	if not nebula.functions:is_visible(current_target) then
+		-- 		return
+		-- 	end
+		-- end
 	
 		if flags["aimbot enable"] and current_target and aiming and head_vec then
 			local smoothness = flags["aimbot smoothness"]
@@ -1659,9 +1931,13 @@ _run_service = run_service.RenderStepped:Connect(function()
 			local move_x = rel_x * smooth_factor
 			local move_y = rel_y * smooth_factor
 	
+			if smoothness == 0 then
+				move_x, move_y = rel_x, rel_y
+			end
+
 			mousemoverel(move_x, move_y)
 		end
-	end)
+	-- end)
 end)
 
 do
@@ -1671,9 +1947,9 @@ do
 		end
 
 		if player ~= local_player then
-            pcall(function()
+            -- pcall(function()
 				coroutine.wrap(ESP)(player)
-			end)
+			-- end)
         end
 	end
     
