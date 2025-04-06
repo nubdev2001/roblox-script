@@ -48,7 +48,8 @@ local nebula = {
     functions = {},
 }
 
-nebula.ui = loadstring(game:HttpGet("http://localhost:8080/scripts/ui.lua"))()
+-- nebula.ui = loadstring(game:HttpGet("http://localhost:8080/scripts/ui.lua"))()
+nebula.ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/nubdev2001/roblox-script/refs/heads/main/scripts/ui.lua"))()
 
 nebula.ui:Notification({Title = "Text",Description = "Text",Duration = 10}) -- Duration can be nil for "x" to pop up
 nebula.ui:Notification2({Title = "Text",Duration = 10})
