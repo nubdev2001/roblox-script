@@ -12,7 +12,7 @@ local RunService = clone_reference(game:GetService("RunService"))
 local PlayerService = clone_reference(game:GetService("Players"))
 local CoreGui = clone_reference(game:GetService("CoreGui"))
 
-local IsLocal,Assets,LocalPlayer = false,{},PlayerService.LocalPlayer
+local IsLocal,Assets,LocalPlayer,IsDestroy = false,{},PlayerService.LocalPlayer,false
 local MainAssetFolder = IsLocal and ReplicatedStorage.BracketV33
 	or InsertService:LoadLocalAsset("rbxassetid://10827276896")
 
@@ -88,20 +88,27 @@ end
 
 local function MakeDraggable(Dragger,Object,OnTick,OnStop)
 	local StartPosition,StartDrag = nil,nil
-	Dragger.InputBegan:Connect(function(Input)
+
+	local _InputBegan
+	_InputBegan = Dragger.InputBegan:Connect(function(Input)
+		if IsDestroy then return _InputBegan:Disconnect() end
 		if Input.UserInputType == Enum.UserInputType.MouseButton1 then
 			StartPosition = UserInputService:GetMouseLocation()
 			StartDrag = Object.AbsolutePosition
 		end
 	end)
-	UserInputService.InputChanged:Connect(function(Input)
+	local _InputChanged
+	_InputChanged = UserInputService.InputChanged:Connect(function(Input)
+		if IsDestroy then return _InputChanged:Disconnect() end
 		if StartDrag and Input.UserInputType == Enum.UserInputType.MouseMovement then
 			local Mouse = UserInputService:GetMouseLocation()
 			local Delta = Mouse - StartPosition StartPosition = Mouse
 			OnTick(Object.Position + UDim2.fromOffset(Delta.X,Delta.Y))
 		end
 	end)
-	Dragger.InputEnded:Connect(function(Input)
+	local _InputEnded
+	_InputEnded = Dragger.InputEnded:Connect(function(Input)
+		if IsDestroy then return _InputEnded:Disconnect() end
 		if Input.UserInputType == Enum.UserInputType.MouseButton1 then
 			StartPosition,StartDrag = nil,nil
 			if OnStop then OnStop(Object.Position) end
@@ -116,7 +123,9 @@ local function MakeResizeable(Dragger,Object,MinSize,OnTick,OnStop)
 			StartSize = Object.AbsoluteSize
 		end
 	end)
-	UserInputService.InputChanged:Connect(function(Input)
+	local _InputChanged
+	_InputChanged = UserInputService.InputChanged:Connect(function(Input)
+		if IsDestroy then return _InputChanged:Disconnect() end
 		if StartPosition and Input.UserInputType == Enum.UserInputType.MouseMovement then
 			local Mouse = UserInputService:GetMouseLocation()
 			local Delta = Mouse - StartPosition
@@ -127,7 +136,9 @@ local function MakeResizeable(Dragger,Object,MinSize,OnTick,OnStop)
 			OnTick(UDim2.fromOffset(SizeX,SizeY))
 		end
 	end)
-	Dragger.InputEnded:Connect(function(Input)
+	local _InputEnded
+	_InputEnded = Dragger.InputEnded:Connect(function(Input)
+		if IsDestroy then return _InputEnded:Disconnect() end
 		if Input.UserInputType == Enum.UserInputType.MouseButton1 then
 			StartPosition,StartSize = nil,nil
 			if OnStop then OnStop(Object.Size) end
@@ -258,7 +269,9 @@ function Assets:Window(ScreenAsset,Window)
 		)
 	end)
 
-	UserInputService.InputChanged:Connect(function(Input)
+	local _UserInputService
+	_UserInputService = UserInputService.InputChanged:Connect(function(Input)
+		if IsDestroy then return _UserInputService:Disconnect() end
 		if WindowAsset.Visible and Input.UserInputType == Enum.UserInputType.MouseMovement then
 			local Mouse = UserInputService:GetMouseLocation()
 			ScreenAsset.ToolTip.Position = UDim2.fromOffset(
@@ -266,7 +279,11 @@ function Assets:Window(ScreenAsset,Window)
 			)
 		end
 	end)
-	RunService.RenderStepped:Connect(function()
+
+	local _RunService
+	_RunService = RunService.RenderStepped:Connect(function()
+		if IsDestroy then return _RunService:Disconnect() end
+
 		Window.RainbowHue = os.clock() % Window.RainbowSpeed / Window.RainbowSpeed
 	end)
 
@@ -509,6 +526,11 @@ function Assets:Window(ScreenAsset,Window)
 		if table.find(GetConfigs(FolderName),AutoLoad) then
 			Window:LoadConfig(FolderName,AutoLoad)
 		end
+	end
+
+	function Window:Unload()
+		IsDestroy = true
+		ScreenAsset:Destroy()
 	end
 
 	return WindowAsset
@@ -776,18 +798,24 @@ function Assets:Slider(Parent,ScreenAsset,Window,Slider)
 		Slider.Value = SliderAsset.Value.Text
 		SliderAsset.Value.Text = ""
 	end)
-	SliderAsset.InputBegan:Connect(function(Input)
+	local _InputBegan
+	_InputBegan = SliderAsset.InputBegan:Connect(function(Input)
+		if IsDestroy then return _InputBegan:Disconnect() end
 		if Input.UserInputType == Enum.UserInputType.MouseButton1 then
 			AttachToMouse(Input)
 			Slider.Active = true
 		end
 	end)
-	SliderAsset.InputEnded:Connect(function(Input)
+	local _InputEnded
+	local _InputEnded = SliderAsset.InputEnded:Connect(function(Input)
+		if IsDestroy then return _InputEnded:Disconnect() end
 		if Input.UserInputType == Enum.UserInputType.MouseButton1 then
 			Slider.Active = false
 		end
 	end)
-	UserInputService.InputChanged:Connect(function(Input)
+	local _InputChanged
+	_InputChanged = UserInputService.InputChanged:Connect(function(Input)
+		if IsDestroy then return _InputChanged:Disconnect() end
 		if Slider.Active and Input.UserInputType == Enum.UserInputType.MouseMovement then
 			AttachToMouse(Input)
 		end
@@ -901,7 +929,10 @@ function Assets:Keybind(Parent,ScreenAsset,Window,Keybind)
 		Window.Colorable[Keybind.ListMimic.Asset.Tick] = Keybind.ListMimic.ColorConfig
 	end
 
-	UserInputService.InputBegan:Connect(function(Input, GameProcessedEvent)
+	local _InputBegan
+
+	_InputBegan = UserInputService.InputBegan:Connect(function(Input, GameProcessedEvent)
+		if IsDestroy then return _InputBegan:Disconnect() end
 		if GameProcessedEvent then return end
 		local Key = Input.KeyCode.Name
 		if Keybind.WaitingForBind and Input.UserInputType.Name == "Keyboard" then
@@ -934,7 +965,9 @@ function Assets:Keybind(Parent,ScreenAsset,Window,Keybind)
 			end
 		end
 	end)
-	UserInputService.InputEnded:Connect(function(Input, GameProcessedEvent)
+	local _InputEnded
+	_InputEnded = UserInputService.InputEnded:Connect(function(Input, GameProcessedEvent)
+		if IsDestroy then return _InputEnded:Disconnect() end
 		if GameProcessedEvent then return end
 		local Key = Input.KeyCode.Name
 		if Input.UserInputType.Name == "Keyboard" then
@@ -1016,8 +1049,9 @@ function Assets:ToggleKeybind(Parent,ScreenAsset,Window,Keybind,Toggle)
 		Keybind.ListMimic.ColorConfig = {false,"BackgroundColor3"}
 		Window.Colorable[Keybind.ListMimic.Asset.Tick] = Keybind.ListMimic.ColorConfig
 	end
-
-	UserInputService.InputBegan:Connect(function(Input, GameProcessedEvent)
+	local _InputBegan
+	_InputBegan = UserInputService.InputBegan:Connect(function(Input, GameProcessedEvent)
+		if IsDestroy then return _InputBegan:Disconnect() end
 		if GameProcessedEvent then return end
 		local Key = Input.KeyCode.Name
 		if Keybind.WaitingForBind and Input.UserInputType.Name == "Keyboard" then
@@ -1042,7 +1076,9 @@ function Assets:ToggleKeybind(Parent,ScreenAsset,Window,Keybind,Toggle)
 			end
 		end
 	end)
-	UserInputService.InputEnded:Connect(function(Input, GameProcessedEvent)
+	local _InputEnded
+	_InputEnded = UserInputService.InputEnded:Connect(function(Input, GameProcessedEvent)
+		if IsDestroy then return _InputEnded:Disconnect() end
 		if GameProcessedEvent then return end
 		local Key = Input.KeyCode.Name
 		if Input.UserInputType.Name == "Keyboard" then
@@ -1107,7 +1143,7 @@ function Assets:Dropdown(Parent,ScreenAsset,Window,Dropdown)
 	DropdownAsset.MouseButton1Click:Connect(function()
 		if not OptionContainerAsset.Visible and OptionContainerAsset.ListLayout.AbsoluteContentSize.Y ~= 0 then
 			ContainerRender = RunService.RenderStepped:Connect(function()
-				if not OptionContainerAsset.Visible then ContainerRender:Disconnect() end
+				if not OptionContainerAsset.Visible or IsDestroy then ContainerRender:Disconnect() end
 
 				OptionContainerAsset.Position = UDim2.fromOffset(
 					DropdownAsset.Background.AbsolutePosition.X + 1,
@@ -1326,7 +1362,7 @@ function Assets:Colorpicker(Parent,ScreenAsset,Window,Colorpicker)
 		if not PaletteAsset.Visible then
 			PaletteAsset.Visible = true
 			PaletteRender = RunService.RenderStepped:Connect(function()
-				if not PaletteAsset.Visible then PaletteRender:Disconnect() end
+				if not PaletteAsset.Visible or IsDestroy then PaletteRender:Disconnect() end
 				PaletteAsset.Position = UDim2.fromOffset(
 					(ColorpickerAsset.Color.AbsolutePosition.X - PaletteAsset.AbsoluteSize.X) + 21,
 					ColorpickerAsset.Color.AbsolutePosition.Y + 50
@@ -1345,9 +1381,9 @@ function Assets:Colorpicker(Parent,ScreenAsset,Window,Colorpicker)
 	end)
 	PaletteAsset.SVPicker.InputBegan:Connect(function(Input)
 		if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-			if SVRender then SVRender:Disconnect() end
+			if SVRender or IsDestroy then SVRender:Disconnect() end
 			SVRender = RunService.RenderStepped:Connect(function()
-				if not PaletteAsset.Visible then SVRender:Disconnect() end
+				if not PaletteAsset.Visible or IsDestroy then SVRender:Disconnect() end
 				local Mouse = UserInputService:GetMouseLocation()
 				local ColorX = math.clamp(Mouse.X - PaletteAsset.SVPicker.AbsolutePosition.X,0,PaletteAsset.SVPicker.AbsoluteSize.X) / PaletteAsset.SVPicker.AbsoluteSize.X
 				local ColorY = math.clamp(Mouse.Y - (PaletteAsset.SVPicker.AbsolutePosition.Y + 36),0,PaletteAsset.SVPicker.AbsoluteSize.Y) / PaletteAsset.SVPicker.AbsoluteSize.Y
@@ -1365,9 +1401,9 @@ function Assets:Colorpicker(Parent,ScreenAsset,Window,Colorpicker)
 	end)
 	PaletteAsset.Hue.InputBegan:Connect(function(Input)
 		if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-			if HueRender then HueRender:Disconnect() end
+			if HueRender or IsDestroy then HueRender:Disconnect() end
 			HueRender = RunService.RenderStepped:Connect(function()
-				if not PaletteAsset.Visible then HueRender:Disconnect() end
+				if not PaletteAsset.Visible or IsDestroy then HueRender:Disconnect() end
 				local Mouse = UserInputService:GetMouseLocation()
 				local ColorX = math.clamp(Mouse.X - PaletteAsset.Hue.AbsolutePosition.X,0,PaletteAsset.Hue.AbsoluteSize.X) / PaletteAsset.Hue.AbsoluteSize.X
 				Colorpicker.Value[1] = 1 - ColorX
@@ -1384,7 +1420,7 @@ function Assets:Colorpicker(Parent,ScreenAsset,Window,Colorpicker)
 		if Input.UserInputType == Enum.UserInputType.MouseButton1 then
 			if AlphaRender then AlphaRender:Disconnect() end
 			AlphaRender = RunService.RenderStepped:Connect(function()
-				if not PaletteAsset.Visible then AlphaRender:Disconnect() end
+				if not PaletteAsset.Visible or IsDestroy then AlphaRender:Disconnect() end
 				local Mouse = UserInputService:GetMouseLocation()
 				local ColorX = math.clamp(Mouse.X - PaletteAsset.Alpha.AbsolutePosition.X,0,PaletteAsset.Alpha.AbsoluteSize.X) / PaletteAsset.Alpha.AbsoluteSize.X
 				Colorpicker.Value[4] = math.floor(ColorX * 10^2) / (10^2) -- idk %.2f little bit broken with this
@@ -1418,7 +1454,10 @@ function Assets:Colorpicker(Parent,ScreenAsset,Window,Colorpicker)
 		Colorpicker.Value = Colorpicker.Value
 	end)
 
-	RunService.Heartbeat:Connect(function()
+	local _RunService
+	_RunService = RunService.Heartbeat:Connect(function()
+		if IsDestroy then _RunService:Disconnect() end
+
 		if Colorpicker.Value[5] then
 			if PaletteAsset.Visible then
 				Colorpicker.Value[1] = Window.RainbowHue
@@ -1480,7 +1519,7 @@ function Assets:ToggleColorpicker(Parent,ScreenAsset,Window,Colorpicker)
 		if not PaletteAsset.Visible then
 			PaletteAsset.Visible = true
 			PaletteRender = RunService.RenderStepped:Connect(function()
-				if not PaletteAsset.Visible then PaletteRender:Disconnect() end
+				if not PaletteAsset.Visible or IsDestroy then PaletteRender:Disconnect() end
 				PaletteAsset.Position = UDim2.fromOffset(
 					(ColorpickerAsset.AbsolutePosition.X - PaletteAsset.AbsoluteSize.X) + 21,
 					ColorpickerAsset.AbsolutePosition.Y + 50
@@ -1501,7 +1540,7 @@ function Assets:ToggleColorpicker(Parent,ScreenAsset,Window,Colorpicker)
 		if Input.UserInputType == Enum.UserInputType.MouseButton1 then
 			if SVRender then SVRender:Disconnect() end
 			SVRender = RunService.RenderStepped:Connect(function()
-				if not PaletteAsset.Visible then SVRender:Disconnect() end
+				if not PaletteAsset.Visible or IsDestroy then SVRender:Disconnect() end
 				local Mouse = UserInputService:GetMouseLocation()
 				local ColorX = math.clamp(Mouse.X - PaletteAsset.SVPicker.AbsolutePosition.X,0,PaletteAsset.SVPicker.AbsoluteSize.X) / PaletteAsset.SVPicker.AbsoluteSize.X
 
@@ -1521,7 +1560,7 @@ function Assets:ToggleColorpicker(Parent,ScreenAsset,Window,Colorpicker)
 		if Input.UserInputType == Enum.UserInputType.MouseButton1 then
 			if HueRender then HueRender:Disconnect() end
 			HueRender = RunService.RenderStepped:Connect(function()
-				if not PaletteAsset.Visible then HueRender:Disconnect() end
+				if not PaletteAsset.Visible or IsDestroy then HueRender:Disconnect() end
 				local Mouse = UserInputService:GetMouseLocation()
 				local ColorX = math.clamp(Mouse.X - PaletteAsset.Hue.AbsolutePosition.X,0,PaletteAsset.Hue.AbsoluteSize.X) / PaletteAsset.Hue.AbsoluteSize.X
 				Colorpicker.Value[1] = 1 - ColorX
@@ -1538,7 +1577,7 @@ function Assets:ToggleColorpicker(Parent,ScreenAsset,Window,Colorpicker)
 		if Input.UserInputType == Enum.UserInputType.MouseButton1 then
 			if AlphaRender then AlphaRender:Disconnect() end
 			AlphaRender = RunService.RenderStepped:Connect(function()
-				if not PaletteAsset.Visible then AlphaRender:Disconnect() end
+				if not PaletteAsset.Visible or IsDestroy then AlphaRender:Disconnect() end
 				local Mouse = UserInputService:GetMouseLocation()
 				local ColorX = math.clamp(Mouse.X - PaletteAsset.Alpha.AbsolutePosition.X,0,PaletteAsset.Alpha.AbsoluteSize.X) / PaletteAsset.Alpha.AbsoluteSize.X
 				Colorpicker.Value[4] = math.floor(ColorX * 10^2) / (10^2) -- idk %.2f little bit broken with this
@@ -1572,7 +1611,10 @@ function Assets:ToggleColorpicker(Parent,ScreenAsset,Window,Colorpicker)
 		Colorpicker.Value = Colorpicker.Value
 	end)
 
-	RunService.Heartbeat:Connect(function()
+
+	local _RunService
+	_RunService = RunService.Heartbeat:Connect(function()
+		if IsDestroy then _RunService:Disconnect() end
 		if Colorpicker.Value[5] then
 			if PaletteAsset.Visible then
 				Colorpicker.Value[1] = Window.RainbowHue
@@ -1996,6 +2038,7 @@ function Bracket:Notification(Notification)
 	if Notification.Duration then
 		task.spawn(function()
 			for Time = Notification.Duration,1,-1 do
+				if IsDestroy then return end
 				NotificationAsset.Title.Close.Text = Time
 				task.wait(1)
 			end
@@ -2043,10 +2086,16 @@ function Bracket:Notification2(Notification)
 	end
 
 	TweenSize(NotificationAsset.Main.Size.X.Offset + 4,NotificationAsset.Main.Size.Y.Offset + 4,function()
-		task.wait(Notification.Duration) TweenSize(0,NotificationAsset.Main.Size.Y.Offset + 4,function()
+		
+		task.wait(Notification.Duration) 
+
+		if IsDestroy then return end
+
+		TweenSize(0,NotificationAsset.Main.Size.Y.Offset + 4,function()
 			NotificationAsset:Destroy() if Notification.Callback then Notification.Callback() end
 		end)
 	end)
 end
+
 
 return Bracket

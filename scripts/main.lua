@@ -170,8 +170,12 @@ local Window = nebula.ui:Window({Name = "Nebula",Enabled = true,Color = Color3.n
 			Section:Toggle({Name = "Highlight",Flag = "esp highlight",Side = "Left",Value = false})
 			:Colorpicker({Flag = "esp highlight color",Side = "Left",Value = {0,1,1,0,false} })
 
+						
+			Section:Toggle({Name = "Snaplines",Flag = "snaplines enable",Side = "Left",Value = false})
+			:Colorpicker({Flag = "snaplines color",Side = "Left",Value = {0,0,1,0,false} })
+
 			Section:Toggle({Name = "Visible",Flag = "esp visible",Side = "Left",Value = false})
-			
+
 			
 
 			Section:Toggle({Name = "Health Bar",Flag = "esp health bar",Side = "Left",Value = false})
@@ -211,7 +215,24 @@ local Window = nebula.ui:Window({Name = "Nebula",Enabled = true,Color = Color3.n
 					Value = true
 				},
 			}})
-
+			esp_options:Dropdown({Name = "Snaplines Position",Flag = "snaplines position",Side = "Left",List = {
+				{
+					Name = "top",
+					Mode = "Button", -- Button or Toggle
+					Value = true,
+				},
+				{
+					Name = "center",
+					Mode = "Button",
+					Value = false
+				},
+				{
+					Name = "mouse",
+					Mode = "Button",
+					Value = false
+				},
+			}})
+			esp_options:Slider({Name = "Snaplines thickness",Flag = "snaplines thickness",Side = "Left",Min = 0,Max = 10,Value = 1,Precise = 1,Unit = ""})
 			
 		end
 
@@ -1654,18 +1675,19 @@ local ESP = function(model)
 
 						if flags["snaplines enable"] then
 							drawings.snapline.Visible = true
-							drawings.snapline.BackgroundColor3 = flags["snaplines color"]
+							drawings.snapline.BackgroundColor3 = table_to_color(flags["snaplines color"])
 							local position = Vector2.new(viewport_size.X / 2,-viewportOffset.Y + 5)
+							local start_position = flags["snaplines position"][1]
 
-							if flags["snaplines position"] == "top" then
+							if start_position == "top" then
 								position = Vector2.new(viewport_size.X / 2,-viewportOffset.Y + 5)
 							end
 
-							if flags["snaplines position"] == "center" then
+							if start_position == "center" then
 								position = Vector2.new(viewport_size.X / 2,(viewport_size.Y / 2) - viewportOffset.Y)
 							end
 
-							if flags["snaplines position"] == "mouse" then
+							if start_position == "mouse" then
 								position = Vector2.new(mouse_location.X, mouse_location.Y - viewportOffset.Y)
 							end
 

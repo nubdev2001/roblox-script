@@ -225,3 +225,7 @@ end
 Window:SetValue("Background/Offset",74)
 Window:AutoLoadConfig("Bracket_Example")
 Window:SetValue("UI/Enabled",Window.Flags["UI/OOL"])
+
+wait(2)
+
+Window:Unload()
