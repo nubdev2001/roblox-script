@@ -189,8 +189,8 @@ local Window = nebula.ui:Window({Name = "Nebula",Enabled = true,Color = Color3.n
 		end
 
 		local esp_options = VisualTab:Section({Name = "ESP Options",Side = "Right"}) do
-			esp_options:Slider({Name = "HealthBar thickness",Flag = "health bar thickness",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 1,Unit = ""})
-			esp_options:Slider({Name = "Skeleton thickness",Flag = "esp skeleton thickness",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 1,Unit = ""})
+			esp_options:Slider({Name = "HealthBar thickness",Flag = "health bar thickness",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 0,Unit = ""})
+			esp_options:Slider({Name = "Skeleton thickness",Flag = "esp skeleton thickness",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 0,Unit = ""})
 			esp_options:Dropdown({Name = "HealthBar Position",Flag = "health bar position",Side = "Left",List = {
 				{
 					Name = "bottom",
@@ -260,14 +260,8 @@ local Window = nebula.ui:Window({Name = "Nebula",Enabled = true,Color = Color3.n
 					Value = false
 				},
 			}})
-			Section:Slider({Name = "Font Size",Flag = "font size",Side = "Left",Min = 8,Max = 20,Value = 8,Precise = 1,Unit = ""})
-
-		end
-
-
-		
-
-					
+			Section:Slider({Name = "Font Size",Flag = "font size",Side = "Left",Min = 8,Max = 20,Value = 8,Precise = 0,Unit = ""})
+		end		
 	end
 	
     local OptionsTab = Window:Tab({Name = "Options"}) do
@@ -284,6 +278,9 @@ local Window = nebula.ui:Window({Name = "Nebula",Enabled = true,Color = Color3.n
 
             MenuSection:Toggle({Name = "Watermark",Flag = "UI/Watermark/Enabled",Value = true,
             Callback = function(Bool) Window.Watermark.Enabled = Bool end}):Keybind({Flag = "UI/Watermark/Keybind"})
+
+			MenuSection:Slider({Name = "Tick Rate",Flag = "tick rate",Side = "Left",Min = 10,Max = 240,Value = 50,Precise = 0,Unit = ""})
+
         end
 
         OptionsTab:AddConfigSection("Bracket_Example","Left")
@@ -342,87 +339,6 @@ Window:AutoLoadConfig("Bracket_Example")
 Window:SetValue("UI/Enabled",Window.Flags["UI/OOL"])
 
 local flags = Window.Flags
-
--- local flags = {
---     ["fov enable"] = false,
---     ["fov size"] = 100,
---     ["snapline enable"] = false,
---     ["prediction dot enable"] = false,
---     ["prediction dot size"] = 3,
---     ["snaplines enable"] = false,
-
---     ["crosshair enable"] = false,
---     ["crosshair size"] = 5,
---     ["aimbot enable"] = false,
---     ["aimbot smoothness"] = 0.8,
--- 	["target npcs"] = true,
--- 	["radar enable"] = true,
-
---     ["esp enable"] = true,
---     ["esp box"] = true,
--- 	["esp box 3d"] = false,
---     ["box type"] = "cornered",
---     ["esp name"] = true,
---     ["esp distance"] = true,
---     ["esp skeleton"] = true,
---     ["esp highlight"] = true,
---     ["esp displayname"] = true,
---     ["esp visible"] = false,
---     ["esp health bar"] = true,
---     ["esp health text"] = true,
-
--- 	["esp nodes"] = true,
--- 	["esp btr"] = true,
-	
--- 	["esp nodes keybind"] = Enum.KeyCode.V,
-    
---     ["team check"] = false,
---     ["dead check"] = true,
---     ["down check"] = true,
---     ["font face"] = "FredokaOne",
---     ["wall check"] = false,
-    
---     ["health bar position"] = "left",
--- 	["snaplines position"] = "top", --  center , top , mouse
-
---     ["weapon esp"] = false,
-
---     ["esp name color"] = Color3.fromRGB(255, 255, 255),
---     ["esp skeleton color"] = Color3.fromRGB(255, 255, 255),
---     ["esp highligh color"] = Color3.fromRGB(233, 144, 255),
---     ["esp distance color"] = Color3.fromRGB(0, 247, 255),
---     ["esp weapon color"] = Color3.fromRGB(255, 255, 255),
---     ["esp box color"] = Color3.fromRGB(255, 255, 255),
---     ["snapline color"] = Color3.fromRGB(255, 255, 255),
---     ["prediction dot color"] = Color3.fromRGB(255, 69, 69),
---     ["fov color"] = Color3.fromRGB(255, 255, 255),
---     ["crosshair color"] = Color3.fromRGB(2, 255, 15),
--- 	["snaplines color"] = Color3.fromRGB(255, 255, 255),
--- 	["esp box 3d color"] = Color3.fromRGB(255, 255, 255),
-
--- 	["esp nodes color"] = Color3.fromRGB(255, 253, 110),
--- 	["esp btr color"] = Color3.fromRGB(255, 70, 70),
-
--- 	["esp nodes list"] = {"Stone","Metal","Phosphate","Part"}, -- Stone, Metal, Phosphate
-
---     ["snapline transparency"] = 0.8,
---     ["fov transparency"] = 0.8,
--- 	["esp box 3d transparency"] = 0,
-
---     ["body parts"] = "Head",
---     ["fov thickness"] = 1,
---     ["snapline thickness"] = 1,
---     ["crosshair thickness"] = 2,
---     ["health bar thickness"] = 2,
---     ["esp skeleton thickness"] = 1,
--- 	["snaplines thickness"] = 1,
--- 	["esp box 3d thickness"] = 1,
-
--- 	["radar size"] = 200,
--- 	["radar map scale"] = 100,
--- 	["radar position"] = "topright"
-	
--- }
 
 local hash = http_service:GenerateGUID(true) -- sdfsdf-sdfsdf5-sdf6sd5f-s5df4s5d
 getgenv().hash = hash
@@ -1311,11 +1227,22 @@ local ESP = function(model)
 		local health_transition_old = 0
 		local current_health = 0
 
-		model.Destroying:Connect(function()
-			
-		end)
+
+		local lastUpdate = 0
 
         esp_connection = run_service.RenderStepped:Connect(function(deltaTime)
+			local fps = flags["tick rate"] or 60
+			local frameTime = 1 / fps
+
+			local now = tick()
+
+			if now - lastUpdate < frameTime then
+				return
+			end
+
+			lastUpdate = now
+
+
             if getgenv().hash ~= hash then
                 clear_esp()
             end
@@ -1342,19 +1269,9 @@ local ESP = function(model)
                     if not position then
                         return
                     end
-					
-					
-					-- if flags["radar enable"] then
-					-- 	local relativePos = (hrp.Position - camera.CFrame.Position) / flags["radar map scale"]
-					-- 	local x = math.clamp(0.5 + relativePos.X / flags["radar size"], 0, 1)
-					-- 	local y = math.clamp(0.5 - relativePos.Z / flags["radar size"], 0, 1)
-						
-					-- 	drawings.radar_player_dot.Position = UDim2.new(x, -3, y, -3)							
-					-- end
 
                     local max_distance = (camera.CFrame.Position - position).Magnitude / 3.5714285714
                     local esp_enable =  flags["esp enable"]
-					-- print(esp_enable)
 
                     if max_distance and char_model and humanoid and hrp and esp_enable then
                         local team_check = flags["team check"]
@@ -1850,29 +1767,21 @@ local ESP = function(model)
 	-- end)
 end
 
-local function is_valid_target(target)
-	if not target then
-		return false
-	end
-
-	local character = target.Parent
-	if not character then
-		return false
-	end
-
-	local humanoid = character:FindFirstChild("Humanoid")
-	if not humanoid or is_dead(humanoid) then
-		return false
-	end
-
-	return true
-end
-
-
-
 local _run_service
+local lastUpdate = 0
 
 _run_service = run_service.RenderStepped:Connect(function()
+	local fps = flags["tick rate"] or 60
+	local frameTime = 1 / fps
+
+	local now = tick()
+
+	if now - lastUpdate < frameTime then
+		return
+	end
+
+		lastUpdate = now
+
     if hash ~= getgenv().hash then
         pcall(function()
 			Window:Unload()
@@ -1973,12 +1882,10 @@ end)
 
 do
     for _,player in pairs(players:GetPlayers()) do
-		if getgenv().hash ~= hash then
-			return
-		end
-
 		if player ~= local_player then
-            coroutine.wrap(ESP)(player)
+            pcall(function()
+				coroutine.wrap(ESP)(player)
+			end)
         end
 	end
     
@@ -1988,7 +1895,9 @@ do
 		end
 
         task.delay(1, function()	
-            coroutine.wrap(ESP)(player)
+            pcall(function()
+				coroutine.wrap(ESP)(player)
+			end)
         end)
     end)
 end
