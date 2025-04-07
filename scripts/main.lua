@@ -1855,6 +1855,7 @@ local _run_service
 _run_service = run_service.RenderStepped:Connect(function()
     if hash ~= getgenv().hash then
         pcall(function()
+			Window:Unload()
 			_run_service:Disconnect()
 
 			circle:Destroy()
