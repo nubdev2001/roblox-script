@@ -18,6 +18,7 @@ local camera = workspace.CurrentCamera
 local viewport_size = camera.ViewportSize
 local mouse_location = user_input_service:GetMouseLocation()
 local current_target: BasePart
+local current_target_screen_pos: Vector2 = nil
 local viewportOffset = gui_service:GetGuiInset() -- Offset from the top bar
 
 local raycast_params = RaycastParams.new()
@@ -175,8 +176,7 @@ local Window = nebula.ui:Window({Name = "Nebula",Enabled = true,Color = Color3.n
 			:Colorpicker({Flag = "snaplines color",Side = "Left",Value = {0,0,1,0,false} })
 
 			Section:Toggle({Name = "Visible",Flag = "esp visible",Side = "Left",Value = false})
-
-			
+			Section:Toggle({Name = "Display Name",Flag = "esp displayname",Side = "Left",Value = false})
 
 			Section:Toggle({Name = "Health Bar",Flag = "esp health bar",Side = "Left",Value = false})
 			Section:Toggle({Name = "Health Text",Flag = "esp health text",Side = "Left",Value = false})
@@ -1850,6 +1850,26 @@ local ESP = function(model)
 	-- end)
 end
 
+local function is_valid_target(target)
+	if not target then
+		return false
+	end
+
+	local character = target.Parent
+	if not character then
+		return false
+	end
+
+	local humanoid = character:FindFirstChild("Humanoid")
+	if not humanoid or is_dead(humanoid) then
+		return false
+	end
+
+	return true
+end
+
+
+
 local _run_service
 
 _run_service = run_service.RenderStepped:Connect(function()
@@ -1876,22 +1896,18 @@ _run_service = run_service.RenderStepped:Connect(function()
 				end
 			end
 		end)
+		return
     end
-    
-
-    -- pcall(function()
-		local head_vec;
 
 		do
 			local fov_circle_size = flags["fov size"]
-
-			-- print(fov_circle_size)
 	
 			local head, pos = get_target(fov_circle_size)
+
 			current_target = head
-	
+
 			if pos then
-				head_vec = Vector2.new(pos.X, pos.Y)
+				local head_vec = Vector2.new(pos.X, pos.Y)
 
 				dot.Visible = flags["prediction dot enable"]
 				snapline.Visible = flags["snapline enable"]
@@ -1899,6 +1915,26 @@ _run_service = run_service.RenderStepped:Connect(function()
 				snapline.From = mouse_location
 				snapline.To = head_vec
 				dot.Position = head_vec
+
+				if flags["aimbot enable"] and current_target and aiming and head_vec then
+					local smoothness = flags["aimbot smoothness"]
+					smoothness = math.max(0.1, math.min(smoothness, 1.0))  -- Clamp smoothness between 0.1 and 1
+				
+					-- Calculate relative movement vector
+					local rel_x = head_vec.x - mouse_location.x
+					local rel_y = head_vec.y - mouse_location.y
+					
+					-- Apply smoothing interpolation
+					local smooth_factor = 1 - smoothness
+					local move_x = rel_x * smooth_factor
+					local move_y = rel_y * smooth_factor
+			
+					if smoothness == 0 then
+						move_x, move_y = rel_x, rel_y
+					end
+	
+					mousemoverel(move_x, move_y)
+				end
 			else
 				dot.Visible = false
 				snapline.Visible = false
@@ -1912,10 +1948,6 @@ _run_service = run_service.RenderStepped:Connect(function()
 			dot.Color = table_to_color(flags["prediction dot color"])
 			dot.FillTransparency = flags["prediction dot transparency"]
 			dot.Radius = flags["prediction dot size"]
-
-	
-			-- circle.Radius = fov_circle_size
-			-- circle.Color = flags["fov color"]
 	
 			circle.Size = UDim2.new(0, fov_circle_size * 2, 0, fov_circle_size * 2)
 			circle.Position  = UDim2.new(0, mouse_location.X - circle.Size.X.Offset / 2 - viewportOffset.X, 0, mouse_location.Y - circle.Size.Y.Offset / 2 - viewportOffset.Y)
@@ -1933,35 +1965,10 @@ _run_service = run_service.RenderStepped:Connect(function()
 			crosshair_vertical.To = Vector2.new(center.X, center.Y + flags["crosshair size"])
 			crosshair_horizontal.From = Vector2.new(center.X - flags["crosshair size"], center.Y)
 			crosshair_horizontal.To = Vector2.new(center.X + flags["crosshair size"], center.Y)
-		end
 
-		
-		-- if flags["visibility check"] and current_target then
-		-- 	if not nebula.functions:is_visible(current_target) then
-		-- 		return
-		-- 	end
-		-- end
-	
-		if flags["aimbot enable"] and current_target and aiming and head_vec then
-			local smoothness = flags["aimbot smoothness"]
-			smoothness = math.max(0.1, math.min(smoothness, 1.0))  -- Clamp smoothness between 0.1 and 1
-		
-			-- Calculate relative movement vector
-			local rel_x = head_vec.x - mouse_location.x
-			local rel_y = head_vec.y - mouse_location.y
-			
-			-- Apply smoothing interpolation
-			local smooth_factor = 1 - smoothness
-			local move_x = rel_x * smooth_factor
-			local move_y = rel_y * smooth_factor
-	
-			if smoothness == 0 then
-				move_x, move_y = rel_x, rel_y
-			end
-
-			mousemoverel(move_x, move_y)
+			crosshair_vertical.Visible = flags["crosshair enable"]
+			crosshair_horizontal.Visible = flags["crosshair enable"]
 		end
-	-- end)
 end)
 
 do
@@ -1971,9 +1978,7 @@ do
 		end
 
 		if player ~= local_player then
-            -- pcall(function()
-				coroutine.wrap(ESP)(player)
-			-- end)
+            coroutine.wrap(ESP)(player)
         end
 	end
     
@@ -1983,9 +1988,7 @@ do
 		end
 
         task.delay(1, function()	
-            pcall(function()
-				coroutine.wrap(ESP)(player)
-			end)
+            coroutine.wrap(ESP)(player)
         end)
     end)
 end
