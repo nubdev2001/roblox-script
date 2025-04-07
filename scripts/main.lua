@@ -171,6 +171,10 @@ local Window = nebula.ui:Window({Name = "Nebula",Enabled = true,Color = Color3.n
 			Section:Toggle({Name = "Highlight",Flag = "esp highlight",Side = "Left",Value = false})
 			:Colorpicker({Flag = "esp highlight color",Side = "Left",Value = {0,1,1,0,false} })
 
+			Section:Toggle({Name = "Cham",Flag = "esp cham",Side = "Left",Value = false})
+			:Colorpicker({Flag = "esp cham color",Side = "Left",Value = {0,1,1,0,false} })
+
+
 						
 			Section:Toggle({Name = "Snaplines",Flag = "snaplines enable",Side = "Left",Value = false})
 			:Colorpicker({Flag = "snaplines color",Side = "Left",Value = {0,0,1,0,false} })
@@ -191,6 +195,9 @@ local Window = nebula.ui:Window({Name = "Nebula",Enabled = true,Color = Color3.n
 		local esp_options = VisualTab:Section({Name = "ESP Options",Side = "Right"}) do
 			esp_options:Slider({Name = "HealthBar thickness",Flag = "health bar thickness",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 0,Unit = ""})
 			esp_options:Slider({Name = "Skeleton thickness",Flag = "esp skeleton thickness",Side = "Left",Min = 1,Max = 10,Value = 1,Precise = 0,Unit = ""})
+			esp_options:Slider({Name = "Cham Transparency",Flag = "esp cham transparency",Side = "Left",Min = 0,Max = 1,Value = 0,Precise = 1,Unit = ""})
+			esp_options:Slider({Name = "Max Distance",Flag = "esp max distance",Side = "Left",Min = 0,Max = 10000,Value = 1000,Precise = 0,Unit = ""})
+
 			esp_options:Dropdown({Name = "HealthBar Position",Flag = "health bar position",Side = "Left",List = {
 				{
 					Name = "bottom",
@@ -269,7 +276,7 @@ local Window = nebula.ui:Window({Name = "Nebula",Enabled = true,Color = Color3.n
             local UIToggle = MenuSection:Toggle({Name = "UI Enabled",Flag = "UI/Enabled",IgnoreFlag = true,
             Value = Window.Enabled,Callback = function(Bool) Window.Enabled = Bool end})
             UIToggle:Keybind({Value = "RightShift",Flag = "UI/Keybind",DoNotClear = true})
-            UIToggle:Colorpicker({Flag = "UI/Color",Value = {1,0.25,1,0,true},
+            UIToggle:Colorpicker({Flag = "UI/Color",Value = {1,0.25,1,0,false},
             Callback = function(HSVAR,Color) Window.Color = Color end})
 
             MenuSection:Toggle({Name = "Open On Load",Flag = "UI/OOL",Value = true})
@@ -608,29 +615,6 @@ local get_bench_health = function(obj)
 	return math.huge, math.huge, nil
 end
 
-function predict_target(bullet_speed)
-    if not current_target or not aiming then return Vector2.new(0, 0) end
-    
-    local target_pos = current_target.Position
-    local target_vel = current_target.Velocity or Vector2.new(0, 0)  -- Fallback to zero if no velocity
-    
-    local my_pos = camera.CFrame.Position
-    
-    local distance = (target_pos - my_pos).Magnitude
-    
-    local time_to_target = distance / bullet_speed
-    
-    -- Predict future position
-    local predicted_pos = target_pos + (target_vel * time_to_target)
-    
-    -- Return the predicted position relative to your current aim
-    return predicted_pos - my_pos
-end
-
-
-
-
-
 local metatable = {}
 metatable.__index = metatable
 
@@ -901,15 +885,7 @@ end
 
 local cache_functions = {
 	[types.nodes] = node_esp,
-	-- [types.drops] = drops_esp,
-	-- [types.plants] = plant_esp,
-	-- [types.soldiers] = military_esp,
-	-- [types.animals] = animal_esp,
 	[types.btr] = btr_esp,
-	-- bases object
-	-- [types.body_bags] = object_handler,
-	-- [types.crates] = object_handler,
-	-- [types.timed_crate] = object_handler,
 }
 
 local update_cache = function() -- this handles the turning off / on
@@ -963,7 +939,6 @@ local circle = nebula.functions:create("Frame",{
 	Name = "Fov",
 	Size = UDim2.new(0, flags["fov size"], 0, flags["fov size"]),
 	BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-	-- AnchorPoint = Vector2.new(0,0.5),
 	Parent = gui_holder
 })
 
@@ -972,21 +947,11 @@ local uiCorner = Instance.new("UICorner")
 uiCorner.CornerRadius = UDim.new(1, 0)
 uiCorner.Parent = circle
 
-
 -- Create UIStroke for border
 local uiStroke = Instance.new("UIStroke")
 uiStroke.Thickness = 2
 uiStroke.Color = table_to_color(flags["fov color"]) 
 uiStroke.Parent = circle
-
--- local gradient = Instance.new("UIGradient")
--- gradient.Parent = circle
--- gradient.Rotation = 45  -- You can set any rotation for the gradient
--- gradient.Color = ColorSequence.new({
---     ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 240, 109)),  -- Start color (red)
---     ColorSequenceKeypoint.new(1, Color3.fromRGB(245, 161, 234))   -- End color (blue)
--- })
--- gradient.Parent = uiStroke
 
 local snapline = Drawing.new("Line")
 snapline.Thickness = flags["snapline thickness"]
@@ -1026,7 +991,6 @@ local ESP = function(model)
     local esp_connection
 
 	local font = flags["font face"][1]
-
 
     local drawings = {
         name = nebula.functions:create("TextLabel",{
@@ -1171,12 +1135,17 @@ local ESP = function(model)
 		-- 	Image = "rbxassetid://YOUR_IMAGE_ID",
 		-- 	AnchorPoint = Vector2.new(0.5, 0.5)
 		-- }),
+		cham = nebula.functions:create("Highlight", {
+			Parent = esp_holder,
+			Name = "cham",
+			FillColor = Color3.fromRGB(255, 255, 255),
+			OutlineColor = Color3.fromRGB(0, 0, 0),
+			FillTransparency = 0.5,
+			OutlineTransparency = 0.5,
+			DepthMode = Enum.HighlightDepthMode.AlwaysOnTop,
+			Enabled = false,
+		}),
     }
-
-    -- local radar_player = Instance.new("UICorner")
-    -- radar_player.CornerRadius = UDim.new(1, 0)
-    -- radar_player.Parent = drawings.radar_player_dot
-	-- wait(1)
 
 	for _,bone in {"head","torso1","torso2","larm1","larm2","larm3","rarm1","rarm2","rarm3","lleg1","lleg2","lleg3","rleg1","rleg2","rleg3"} do
 		nebula.functions:create("Frame", {
@@ -1201,8 +1170,13 @@ local ESP = function(model)
     drawings.outline2.Parent = drawings.box2
 
     local function hide_esp()
-        for _, name in { "box_3d","name", "distance", "weapon", "behind_healthbar", "healthbar", "health_text", "box", "box2", "skeleton", "flag1", "flag2", "left_top_fix", "right_top_fix", "bottom_side_fix", "bottom_right_side_fix", "left_top", "left_side", "right_top", "right_side", "bottom_side", "bottom_down", "bottom_right_side", "bottom_right_down","snapline" } do
-            drawings[name].Visible = false
+        for _, name in { "cham","box_3d","name", "distance", "weapon", "behind_healthbar", "healthbar", "health_text", "box", "box2", "skeleton", "flag1", "flag2", "left_top_fix", "right_top_fix", "bottom_side_fix", "bottom_right_side_fix", "left_top", "left_side", "right_top", "right_side", "bottom_side", "bottom_down", "bottom_right_side", "bottom_right_down","snapline" } do
+            if name == "cham" then
+				drawings[name].Enabled = false
+				continue
+			end
+
+			drawings[name].Visible = false
         end
     end
 
@@ -1216,8 +1190,8 @@ local ESP = function(model)
         end
 
         esp_holder:Destroy()
-		-- print("esp ",model.Name," is being destroyed")
     end
+
 
     
 
@@ -1291,12 +1265,18 @@ local ESP = function(model)
 							return hide_esp()
 						end
 
+						if max_distance >= flags["esp max distance"] then
+							hide_esp()
+							return
+						end
+
                         local height = math.tan(math.rad(camera.FieldOfView / 2)) * 2 * pos.Z
 						local scale = Vector2.new((viewport_size.Y / height) * size.X, (viewport_size.Y / height) * size.Y)
                         
                         local box_esp = flags["esp box"]
                         local name_esp = flags["esp name"]
 						local box_3d_esp = flags["esp box 3d"]
+						
 						
 						local box_3d_esp_thickness = flags["esp box 3d thickness"]
 						local box_3d_esp_transparency = flags["esp box 3d transparency"]
@@ -1305,7 +1285,9 @@ local ESP = function(model)
                         local health_bar_position = flags["health bar position"][1]
                         local health_bar_esp = flags["esp health bar"]
 
+						local cham_esp_transparency = flags["esp cham transparency"]
 
+						local cham_esp = flags["esp cham"]
                         local weapon_esp = flags["weapon esp"]
                         local health_text_esp = flags["esp health text"]
                         local skeleton_esp = flags["esp skeleton"]
@@ -1314,6 +1296,7 @@ local ESP = function(model)
                         local visible_flag_esp = flags["esp visible"]
                         local box_type = flags["box type"][1]
 
+						local cham_esp_color = table_to_color(flags["esp cham color"])
                         local name_esp_color = table_to_color(flags["esp name color"])
                         local highlight_esp_color = table_to_color(flags["esp highlight color"])
                         local skeleton_esp_color = table_to_color(flags["esp skeleton color"])
@@ -1330,6 +1313,17 @@ local ESP = function(model)
                             drawings.name.Text = char_model.Name
                         end
 
+						if cham_esp then
+							drawings.cham.Enabled = true
+							drawings.cham.Adornee = char_model
+							drawings.cham.FillColor = cham_esp_color
+							drawings.cham.FillTransparency = cham_esp_transparency
+							drawings.cham.OutlineTransparency = 0
+							drawings.cham.OutlineColor = Color3.fromRGB(0, 0, 0)
+							drawings.cham.Adornee = char_model
+						else
+							drawings.cham.Enabled = false
+						end
 
 						for _, name in { "name", "distance", "weapon", "health_text", "flag1", "flag2", } do
 							drawings[name].Font = flags["font face"][1]
