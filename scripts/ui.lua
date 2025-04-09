@@ -228,7 +228,7 @@ local function GetConfigs(FolderName)
 	local Configs = {}
 	for Index,Config in pairs(listfiles(FolderName .. GetSep() .. "Configs") or {}) do
 		Config = Config:gsub(FolderName .. GetSep() .. "Configs"..GetSep(),"")
-		Config = Config:gsub(".json","")
+		Config = Config:gsub(".json",""):gsub("./","")
 		Configs[#Configs + 1] = Config
 	end
 	return Configs
