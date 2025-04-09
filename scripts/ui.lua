@@ -200,13 +200,34 @@ local function FindElementByFlag(Elements,Flag)
 		end
 	end
 end
+
+local function GetExecutorName()
+	if getexecutorname then
+		local success, name = pcall(getexecutorname)
+		if success then return name end
+	end
+	return "Unknown"
+end
+
+local function GetSep()
+    local Separator = "\\"
+
+    local Name = GetExecutorName()
+
+    if Name == "Xeno" then
+        Separator = "/"
+    end
+   
+    return Separator
+end
+
 local function GetConfigs(FolderName)
 	if not isfolder(FolderName) then makefolder(FolderName) end
-	if not isfolder(FolderName .. "\\Configs") then makefolder(FolderName .. "\\Configs") end
+	if not isfolder(FolderName .. GetSep() .."Configs") then makefolder(FolderName .. GetSep() .. "Configs") end
 
 	local Configs = {}
-	for Index,Config in pairs(listfiles(FolderName .. "\\Configs") or {}) do
-		Config = Config:gsub(FolderName .. "\\Configs\\","")
+	for Index,Config in pairs(listfiles(FolderName .. GetSep() .. "Configs") or {}) do
+		Config = Config:gsub(FolderName .. GetSep() .. "Configs"..GetSep(),"")
 		Config = Config:gsub(".json","")
 		Configs[#Configs + 1] = Config
 	end
@@ -214,16 +235,16 @@ local function GetConfigs(FolderName)
 end
 local function ConfigsToList(FolderName)
 	if not isfolder(FolderName) then makefolder(FolderName) end
-	if not isfolder(FolderName .. "\\Configs") then makefolder(FolderName .. "\\Configs") end
-	if not isfile(FolderName .. "\\AutoLoads.json") then writefile(FolderName .. "\\AutoLoads.json","[]") end
+	if not isfolder(FolderName .. GetSep() .. "Configs") then makefolder(FolderName .. GetSep() .. "Configs") end
+	if not isfile(FolderName .. GetSep() .. "AutoLoads.json") then writefile(FolderName .. GetSep() .. "AutoLoads.json","[]") end
 
 	local Configs = {}
 	local AutoLoads = HttpService:JSONDecode(
-		readfile(FolderName .. "\\AutoLoads.json")
+		readfile(FolderName .. GetSep() .. "AutoLoads.json")
 	) local AutoLoad = AutoLoads[tostring(game.GameId)]
 
-	for Index,Config in pairs(listfiles(FolderName .. "\\Configs") or {}) do
-		Config = Config:gsub(FolderName .. "\\Configs\\","")
+	for Index,Config in pairs(listfiles(FolderName .. GetSep() .. "Configs") or {}) do
+		Config = Config:gsub(FolderName .. GetSep() .. "Configs"..GetSep(),"")
 		Config = Config:gsub(".json","")
 		Configs[#Configs + 1] = {
 			Name = Config,Mode = "Button",
@@ -450,14 +471,14 @@ function Assets:Window(ScreenAsset,Window)
 			end
 		end
 		writefile(
-			FolderName .. "\\Configs\\" .. Name .. ".json",
+			FolderName .. GetSep() .. "Configs" .. GetSep() .. Name .. ".json",
 			HttpService:JSONEncode(Config)
 		)
 	end
 	function Window:LoadConfig(FolderName,Name)
 		if table.find(GetConfigs(FolderName),Name) then
 			local DecodedJSON = HttpService:JSONDecode(
-				readfile(FolderName .. "\\Configs\\" .. Name .. ".json")
+				readfile(FolderName .. GetSep() .. "Configs" .. GetSep() .. Name .. ".json")
 			)
 			for Flag,Value in pairs(DecodedJSON) do
 				local Element = FindElementByFlag(Window.Elements,Flag)
@@ -467,17 +488,17 @@ function Assets:Window(ScreenAsset,Window)
 	end
 	function Window:DeleteConfig(FolderName,Name)
 		if table.find(GetConfigs(FolderName),Name) then
-			delfile(FolderName .. "\\Configs\\" .. Name .. ".json")
+			delfile(FolderName .. GetSep() .. "Configs" .. GetSep() .. Name .. ".json")
 		end
 	end
 	function Window:GetAutoLoadConfig(FolderName)
 		if not isfolder(FolderName) then makefolder(FolderName) end
-		if not isfile(FolderName .. "\\AutoLoads.json") then
-			writefile(FolderName .. "\\AutoLoads.json","[]")
+		if not isfile(FolderName .. GetSep() .. "AutoLoads.json") then
+			writefile(FolderName .. GetSep() .. "AutoLoads.json","[]")
 		end
 
 		local AutoLoads = HttpService:JSONDecode(
-			readfile(FolderName .. "\\AutoLoads.json")
+			readfile(FolderName .. GetSep() .. "AutoLoads.json")
 		) local AutoLoad = AutoLoads[tostring(game.GameId)]
 
 		if table.find(GetConfigs(FolderName),AutoLoad) then
@@ -486,41 +507,41 @@ function Assets:Window(ScreenAsset,Window)
 	end
 	function Window:AddToAutoLoad(FolderName,Name)
 		if not isfolder(FolderName) then makefolder(FolderName) end
-		if not isfile(FolderName .. "\\AutoLoads.json") then
-			writefile(FolderName .. "\\AutoLoads.json","[]")
+		if not isfile(FolderName .. GetSep() .. "AutoLoads.json") then
+			writefile(FolderName .. GetSep() .. "AutoLoads.json","[]")
 		end
 
 		local AutoLoads = HttpService:JSONDecode(
-			readfile(FolderName .. "\\AutoLoads.json")
+			readfile(FolderName .. GetSep() .. "AutoLoads.json")
 		) AutoLoads[tostring(game.GameId)] = Name
 
-		writefile(FolderName .. "\\AutoLoads.json",
+		writefile(FolderName .. GetSep() .. "AutoLoads.json",
 			HttpService:JSONEncode(AutoLoads)
 		)
 	end
 	function Window:RemoveFromAutoLoad(FolderName)
 		if not isfolder(FolderName) then makefolder(FolderName) end
-		if not isfile(FolderName .. "\\AutoLoads.json") then
-			writefile(FolderName .. "\\AutoLoads.json","[]")
+		if not isfile(FolderName .. GetSep() .. "AutoLoads.json") then
+			writefile(FolderName .. GetSep() .. "AutoLoads.json","[]")
 			return
 		end
 
 		local AutoLoads = HttpService:JSONDecode(
-			readfile(FolderName .. "\\AutoLoads.json")
+			readfile(FolderName .. GetSep() .. "AutoLoads.json")
 		) AutoLoads[tostring(game.GameId)] = nil
 
-		writefile(FolderName .. "\\AutoLoads.json",
+		writefile(FolderName .. GetSep() .."AutoLoads.json",
 			HttpService:JSONEncode(AutoLoads)
 		)
 	end
 	function Window:AutoLoadConfig(FolderName)
 		if not isfolder(FolderName) then makefolder(FolderName) end
-		if not isfile(FolderName .. "\\AutoLoads.json") then
-			writefile(FolderName .. "\\AutoLoads.json","[]")
+		if not isfile(FolderName .. GetSep() .. "AutoLoads.json") then
+			writefile(FolderName .. GetSep() .. "AutoLoads.json","[]")
 		end
 
 		local AutoLoads = HttpService:JSONDecode(
-			readfile(FolderName .. "\\AutoLoads.json")
+			readfile(FolderName .. GetSep() .. "AutoLoads.json")
 		) local AutoLoad = AutoLoads[tostring(game.GameId)]
 
 		if table.find(GetConfigs(FolderName),AutoLoad) then
