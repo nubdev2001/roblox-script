@@ -200,39 +200,80 @@ local function FindElementByFlag(Elements,Flag)
 		end
 	end
 end
+
+local function normalize(path)
+	return path:gsub("\\", "/")
+end
+
+-- Try both separators until one works
+local function joinPath(...)
+	local parts = {...}
+	local testPath = table.concat(parts, "/")
+	if isfolder(testPath) or isfile(testPath) then
+		return testPath
+	end
+
+	-- fallback to Windows-style
+	return table.concat(parts, "\\")
+end
+
 local function GetConfigs(FolderName)
+	-- Ensure folder exists (try both styles)
 	if not isfolder(FolderName) then makefolder(FolderName) end
-	if not isfolder(FolderName .. "\\Configs") then makefolder(FolderName .. "\\Configs") end
+
+	local configsPath = joinPath(FolderName, "Configs")
+	if not isfolder(configsPath) then makefolder(configsPath) end
 
 	local Configs = {}
-	for Index,Config in pairs(listfiles(FolderName .. "\\Configs") or {}) do
-		Config = Config:gsub(FolderName .. "\\Configs\\","")
-		Config = Config:gsub(".json","")
-		Configs[#Configs + 1] = Config
+	for _, ConfigPath in pairs(listfiles(configsPath) or {}) do
+		ConfigPath = normalize(ConfigPath) -- use / for consistent parsing
+		local base = normalize(configsPath) .. "/"
+		local Config = ConfigPath:gsub(base, ""):gsub("%.json$", "")
+		Config = Config:gsub("^%./", "")
+		print(Config)
+		table.insert(Configs, Config)
 	end
+
 	return Configs
 end
+
 local function ConfigsToList(FolderName)
+	-- Ensure base folder exists
 	if not isfolder(FolderName) then makefolder(FolderName) end
-	if not isfolder(FolderName .. "\\Configs") then makefolder(FolderName .. "\\Configs") end
-	if not isfile(FolderName .. "\\AutoLoads.json") then writefile(FolderName .. "\\AutoLoads.json","[]") end
+
+	-- Join and create Configs folder
+	local configsPath = joinPath(FolderName, "Configs")
+	if not isfolder(configsPath) then makefolder(configsPath) end
+
+	-- Create AutoLoads.json if missing
+	local autoLoadPath = joinPath(FolderName, "AutoLoads.json")
+	if not isfile(autoLoadPath) then
+		writefile(autoLoadPath, "[]")
+	end
+
+	-- Read autoload data
+	local AutoLoads = HttpService:JSONDecode(readfile(autoLoadPath))
+	local AutoLoad = AutoLoads[tostring(game.GameId)]
 
 	local Configs = {}
-	local AutoLoads = HttpService:JSONDecode(
-		readfile(FolderName .. "\\AutoLoads.json")
-	) local AutoLoad = AutoLoads[tostring(game.GameId)]
-
-	for Index,Config in pairs(listfiles(FolderName .. "\\Configs") or {}) do
-		Config = Config:gsub(FolderName .. "\\Configs\\","")
-		Config = Config:gsub(".json","")
-		Configs[#Configs + 1] = {
-			Name = Config,Mode = "Button",
+	print(configsPath)
+	-- Read and clean up config file names
+	for _, ConfigPath in pairs(listfiles(configsPath) or {}) do
+		ConfigPath = normalize(ConfigPath)
+		local base = normalize(configsPath) .. "/"
+		local Config = ConfigPath:gsub("^" .. base, ""):gsub("%.json$", "")
+		Config = Config:gsub("^%./", "") -- Remove ./ if it sneaks in
+		
+		table.insert(Configs, {
+			Name = Config,
+			Mode = "Button",
 			Value = Config == AutoLoad
-		}
+		})
 	end
 
 	return Configs
 end
+
 
 function Assets:Screen()
 	local ScreenAsset = GetAsset("Screen/Bracket")
@@ -442,91 +483,92 @@ function Assets:Window(ScreenAsset,Window)
 		return KeybindList
 	end
 
-	function Window:SaveConfig(FolderName,Name)
+	function Window:SaveConfig(FolderName, Name)
 		local Config = {}
-		for Index,Element in pairs(Window.Elements) do
+		for _, Element in pairs(Window.Elements) do
 			if Element.Flag and not Element.IgnoreFlag then
 				Config[Element.Flag] = Window.Flags[Element.Flag]
 			end
 		end
-		writefile(
-			FolderName .. "\\Configs\\" .. Name .. ".json",
-			HttpService:JSONEncode(Config)
-		)
+	
+		local configPath = joinPath(FolderName, "Configs", Name .. ".json")
+		writefile(configPath, HttpService:JSONEncode(Config))
 	end
-	function Window:LoadConfig(FolderName,Name)
-		if table.find(GetConfigs(FolderName),Name) then
-			local DecodedJSON = HttpService:JSONDecode(
-				readfile(FolderName .. "\\Configs\\" .. Name .. ".json")
-			)
-			for Flag,Value in pairs(DecodedJSON) do
-				local Element = FindElementByFlag(Window.Elements,Flag)
-				if Element ~= nil then Element.Value = Value end
+	
+	function Window:LoadConfig(FolderName, Name)
+		if table.find(GetConfigs(FolderName), Name) then
+			local configPath = joinPath(FolderName, "Configs", Name .. ".json")
+			local DecodedJSON = HttpService:JSONDecode(readfile(configPath))
+			for Flag, Value in pairs(DecodedJSON) do
+				local Element = FindElementByFlag(Window.Elements, Flag)
+				if Element then Element.Value = Value end
 			end
 		end
 	end
-	function Window:DeleteConfig(FolderName,Name)
-		if table.find(GetConfigs(FolderName),Name) then
-			delfile(FolderName .. "\\Configs\\" .. Name .. ".json")
+	
+	function Window:DeleteConfig(FolderName, Name)
+		if table.find(GetConfigs(FolderName), Name) then
+			local configPath = joinPath(FolderName, "Configs", Name .. ".json")
+			delfile(configPath)
 		end
 	end
+	
 	function Window:GetAutoLoadConfig(FolderName)
 		if not isfolder(FolderName) then makefolder(FolderName) end
-		if not isfile(FolderName .. "\\AutoLoads.json") then
-			writefile(FolderName .. "\\AutoLoads.json","[]")
-		end
+	
+		local autoPath = joinPath(FolderName, "AutoLoads.json")
+		if not isfile(autoPath) then writefile(autoPath, "[]") end
+	
+		local AutoLoads = HttpService:JSONDecode(readfile(autoPath))
+		local AutoLoad = AutoLoads[tostring(game.GameId)]
 
-		local AutoLoads = HttpService:JSONDecode(
-			readfile(FolderName .. "\\AutoLoads.json")
-		) local AutoLoad = AutoLoads[tostring(game.GameId)]
-
-		if table.find(GetConfigs(FolderName),AutoLoad) then
+	
+		if table.find(GetConfigs(FolderName), AutoLoad) then
 			return AutoLoad
 		end
 	end
-	function Window:AddToAutoLoad(FolderName,Name)
+	
+	function Window:AddToAutoLoad(FolderName, Name)
 		if not isfolder(FolderName) then makefolder(FolderName) end
-		if not isfile(FolderName .. "\\AutoLoads.json") then
-			writefile(FolderName .. "\\AutoLoads.json","[]")
-		end
-
-		local AutoLoads = HttpService:JSONDecode(
-			readfile(FolderName .. "\\AutoLoads.json")
-		) AutoLoads[tostring(game.GameId)] = Name
-
-		writefile(FolderName .. "\\AutoLoads.json",
-			HttpService:JSONEncode(AutoLoads)
-		)
+	
+		local autoPath = joinPath(FolderName, "AutoLoads.json")
+		if not isfile(autoPath) then writefile(autoPath, "[]") end
+	
+		local AutoLoads = HttpService:JSONDecode(readfile(autoPath))
+		AutoLoads[tostring(game.GameId)] = Name
+	
+		writefile(autoPath, HttpService:JSONEncode(AutoLoads))
 	end
+	
 	function Window:RemoveFromAutoLoad(FolderName)
 		if not isfolder(FolderName) then makefolder(FolderName) end
-		if not isfile(FolderName .. "\\AutoLoads.json") then
-			writefile(FolderName .. "\\AutoLoads.json","[]")
+	
+		local autoPath = joinPath(FolderName, "AutoLoads.json")
+		if not isfile(autoPath) then
+			writefile(autoPath, "[]")
 			return
 		end
-
-		local AutoLoads = HttpService:JSONDecode(
-			readfile(FolderName .. "\\AutoLoads.json")
-		) AutoLoads[tostring(game.GameId)] = nil
-
-		writefile(FolderName .. "\\AutoLoads.json",
-			HttpService:JSONEncode(AutoLoads)
-		)
+	
+		local AutoLoads = HttpService:JSONDecode(readfile(autoPath))
+		AutoLoads[tostring(game.GameId)] = nil
+	
+		writefile(autoPath, HttpService:JSONEncode(AutoLoads))
 	end
+	
 	function Window:AutoLoadConfig(FolderName)
 		if not isfolder(FolderName) then makefolder(FolderName) end
-		if not isfile(FolderName .. "\\AutoLoads.json") then
-			writefile(FolderName .. "\\AutoLoads.json","[]")
-		end
-
-		local AutoLoads = HttpService:JSONDecode(
-			readfile(FolderName .. "\\AutoLoads.json")
-		) local AutoLoad = AutoLoads[tostring(game.GameId)]
-
-		if table.find(GetConfigs(FolderName),AutoLoad) then
-			Window:LoadConfig(FolderName,AutoLoad)
+	
+		local autoPath = joinPath(FolderName, "AutoLoads.json")
+		if not isfile(autoPath) then writefile(autoPath, "[]") end
+	
+		local AutoLoads = HttpService:JSONDecode(readfile(autoPath))
+		local AutoLoad = AutoLoads[tostring(game.GameId)]
+	
+		if table.find(GetConfigs(FolderName), AutoLoad) then
+			self:LoadConfig(FolderName, AutoLoad)
 		end
 	end
+	
 
 	function Window:Unload()
 		IsDestroy = true
@@ -1672,15 +1714,18 @@ function Bracket:Window(Window)
 				local ConfigList,ConfigDropdown = ConfigsToList(FolderName),nil
 				local ALConfig = Window:GetAutoLoadConfig(FolderName)
 
-				local function UpdateList(Name) ConfigDropdown:Clear()
-					ConfigList = ConfigsToList(FolderName) ConfigDropdown:BulkAdd(ConfigList)
+				local function UpdateList(Name) 
+					ConfigDropdown:Clear()
+					ConfigList = ConfigsToList(FolderName)
+					ConfigDropdown:BulkAdd(ConfigList)
 					ConfigDropdown.Value = {}
 					--ConfigDropdown.Value = {Name or (ConfigList[#ConfigList] and ConfigList[#ConfigList].Name)}
 				end
 
 				local ConfigTextbox = ConfigSection:Textbox({HideName = true,Placeholder = "Config Name",IgnoreFlag = true})
 				ConfigSection:Button({Name = "Create",Callback = function()
-					Window:SaveConfig(FolderName,ConfigTextbox.Value) UpdateList(ConfigTextbox.Value)
+					Window:SaveConfig(FolderName,ConfigTextbox.Value)
+					UpdateList(ConfigTextbox.Value)
 				end})
 
 				ConfigSection:Divider({Text = "Configs"})

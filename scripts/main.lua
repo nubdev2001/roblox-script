@@ -49,8 +49,22 @@ local nebula = {
     functions = {},
 }
 
+local getUiLib = function(url)
+	local success, result = pcall(function()
+		return game:HttpGet("http://localhost:8080/scripts/ui.lua")
+	end)
+
+	if success then
+		return result
+	end
+
+	return pcall(function()
+		return game:HttpGet(url)
+	end)
+end
+
 -- nebula.ui = loadstring(game:HttpGet("http://localhost:8080/scripts/ui.lua"))()
-nebula.ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/nubdev2001/roblox-script/refs/heads/main/scripts/ui.lua"))()
+nebula.ui = loadstring(getUiLib("https://raw.githubusercontent.com/nubdev2001/roblox-script/refs/heads/main/scripts/ui.lua"))()
 
 nebula.ui:Notification({Title = "Text",Description = "Text",Duration = 10}) -- Duration can be nil for "x" to pop up
 nebula.ui:Notification2({Title = "Text",Duration = 10})
@@ -290,7 +304,7 @@ local Window = nebula.ui:Window({Name = "Nebula",Enabled = true,Color = Color3.n
 
         end
 
-        OptionsTab:AddConfigSection("Bracket_Example","Left")
+        OptionsTab:AddConfigSection("Nebula","Left")
 
         local BackgroundSection = OptionsTab:Section({Name = "Background",Side = "Right"}) do
             BackgroundSection:Colorpicker({Name = "Color",Flag = "Background/Color",Value = {1,1,0,0,false},
@@ -342,7 +356,7 @@ local Window = nebula.ui:Window({Name = "Nebula",Enabled = true,Color = Color3.n
 end
 
 Window:SetValue("Background/Offset",74)
-Window:AutoLoadConfig("Bracket_Example")
+Window:AutoLoadConfig("Nebula")
 Window:SetValue("UI/Enabled",Window.Flags["UI/OOL"])
 
 local flags = Window.Flags
