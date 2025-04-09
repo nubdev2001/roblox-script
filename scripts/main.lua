@@ -56,8 +56,8 @@ end
 -- nebula.ui = loadstring(game:HttpGet("http://localhost:8080/scripts/ui.lua"))()
 nebula.ui = loadstring(getUiLib())()
 
-nebula.ui:Notification({Title = "Text",Description = "Text",Duration = 10}) -- Duration can be nil for "x" to pop up
-nebula.ui:Notification2({Title = "Text",Duration = 10})
+-- nebula.ui:Notification({Title = "Text",Description = "Text",Duration = 10}) -- Duration can be nil for "x" to pop up
+-- nebula.ui:Notification2({Title = "Text",Duration = 10})
 
 -- see source code for more hidden things i forgot to add in this example
 local Window = nebula.ui:Window({Name = "Nebula",Enabled = true,Color = Color3.new(0.349019, 0, 1),Size = UDim2.new(0,496,0,496),Position = UDim2.new(0.5,-248,0.5,-248)}) do
