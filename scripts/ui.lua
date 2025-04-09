@@ -245,7 +245,7 @@ local function ConfigsToList(FolderName)
 
 	for Index,Config in pairs(listfiles(FolderName .. GetSep() .. "Configs") or {}) do
 		Config = Config:gsub(FolderName .. GetSep() .. "Configs"..GetSep(),"")
-		Config = Config:gsub(".json","")
+		Config = Config:gsub(".json",""):gsub("./","")
 		Configs[#Configs + 1] = {
 			Name = Config,Mode = "Button",
 			Value = Config == AutoLoad
