@@ -49,22 +49,12 @@ local nebula = {
     functions = {},
 }
 
-local getUiLib = function(url)
-	local success, result = pcall(function()
-		return game:HttpGet("http://localhost:8080/scripts/ui.lua")
-	end)
-
-	if success then
-		return result
-	end
-
-	return pcall(function()
-		return game:HttpGet(url)
-	end)
+local getUiLib = function()
+	return game:HttpGet("https://raw.githubusercontent.com/nubdev2001/roblox-script/refs/heads/main/scripts/ui.lua")
 end
 
 -- nebula.ui = loadstring(game:HttpGet("http://localhost:8080/scripts/ui.lua"))()
-nebula.ui = loadstring(getUiLib("https://raw.githubusercontent.com/nubdev2001/roblox-script/refs/heads/main/scripts/ui.lua"))()
+nebula.ui = loadstring(getUiLib())()
 
 nebula.ui:Notification({Title = "Text",Description = "Text",Duration = 10}) -- Duration can be nil for "x" to pop up
 nebula.ui:Notification2({Title = "Text",Duration = 10})
