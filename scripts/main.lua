@@ -60,13 +60,8 @@ nebula.ui:Notification({Title = "Text",Description = "Text",Duration = 10}) -- D
 nebula.ui:Notification2({Title = "Text",Duration = 10})
 
 -- see source code for more hidden things i forgot to add in this example
-local Window = nebula.ui:Window({Name = "Nebula",Enabled = true,Color = Color3.new(1,0.5,0.25),Size = UDim2.new(0,496,0,496),Position = UDim2.new(0.5,-248,0.5,-248)}) do
+local Window = nebula.ui:Window({Name = "Nebula",Enabled = true,Color = Color3.new(0.349019, 0, 1),Size = UDim2.new(0,496,0,496),Position = UDim2.new(0.5,-248,0.5,-248)}) do
 
-    local Watermark = Window:Watermark({
-        Title = "Nebula V1.0",
-        Flag = "UI/Watermark/Position",
-        Enabled = true,
-    })
 
     local Tab = Window:Tab({Name = "Aimbot"}) do
 
@@ -290,7 +285,7 @@ local Window = nebula.ui:Window({Name = "Nebula",Enabled = true,Color = Color3.n
             MenuSection:Toggle({Name = "Watermark",Flag = "UI/Watermark/Enabled",Value = true,
             Callback = function(Bool) Window.Watermark.Enabled = Bool end}):Keybind({Flag = "UI/Watermark/Keybind"})
 
-			MenuSection:Slider({Name = "Tick Rate",Flag = "tick rate",Side = "Left",Min = 10,Max = 240,Value = 50,Precise = 0,Unit = ""})
+			MenuSection:Slider({Name = "Tick Rate",Flag = "tick rate",Side = "Left",Min = 10,Max = 240,Value = 60,Precise = 0,Unit = ""})
 
         end
 
