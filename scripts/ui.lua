@@ -256,11 +256,14 @@ local function ConfigsToList(FolderName)
 	local AutoLoad = AutoLoads[tostring(game.GameId)]
 
 	local Configs = {}
-	print(configsPath)
+
 	-- Read and clean up config file names
 	for _, ConfigPath in pairs(listfiles(configsPath) or {}) do
 		ConfigPath = normalize(ConfigPath)
 		local base = normalize(configsPath) .. "/"
+		AutoLoad = AutoLoad:gsub( base, "")
+
+		
 		local Config = ConfigPath:gsub("^" .. base, ""):gsub("%.json$", "")
 		Config = Config:gsub("^%./", "") -- Remove ./ if it sneaks in
 		
@@ -269,6 +272,7 @@ local function ConfigsToList(FolderName)
 			Mode = "Button",
 			Value = Config == AutoLoad
 		})
+		
 	end
 
 	return Configs
