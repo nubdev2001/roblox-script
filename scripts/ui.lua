@@ -230,7 +230,7 @@ local function GetConfigs(FolderName)
 		local base = normalize(configsPath) .. "/"
 		local Config = ConfigPath:gsub(base, ""):gsub("%.json$", "")
 		Config = Config:gsub("^%./", "")
-		print(Config)
+	
 		table.insert(Configs, Config)
 	end
 
@@ -261,12 +261,12 @@ local function ConfigsToList(FolderName)
 	for _, ConfigPath in pairs(listfiles(configsPath) or {}) do
 		ConfigPath = normalize(ConfigPath)
 		local base = normalize(configsPath) .. "/"
-		AutoLoad = AutoLoad:gsub( base, "")
+		AutoLoad = AutoLoad:gsub(base, "")
 
 		
 		local Config = ConfigPath:gsub("^" .. base, ""):gsub("%.json$", "")
 		Config = Config:gsub("^%./", "") -- Remove ./ if it sneaks in
-		
+		print(Config, AutoLoad)
 		table.insert(Configs, {
 			Name = Config,
 			Mode = "Button",
